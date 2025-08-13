@@ -3,19 +3,27 @@ import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 import NarBar from './component/narbar'
-import Herosection from './component/herosextion'
+import Herosection from './component/herosection'
+import Footer from './component/footer'
+import Search from './component/search'
+import Contain from './component/ArticleSection'
+
 
 
 
 
 
 function App() {
-  const [count, setCount] = useState(0)
+
+
 
   return (
-    <div>
+    <div className="flex flex-col">
     <NarBar/>
-    <Herosection/>
+    <Herosection/> 
+    <Search/>
+    <Contain/>
+    {/* <Footer/> */}
     </div>
 
   )
@@ -23,4 +31,4 @@ function App() {
 
 export default App
 
-
+  
