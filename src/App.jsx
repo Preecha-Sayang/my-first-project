@@ -6,7 +6,7 @@ import NarBar from './component/narbar'
 import Herosection from './component/herosection'
 import Footer from './component/footer'
 import Search from './component/search'
-import Contain from './component/ArticleSection'
+import BlogCard from './component/ArticleSection'
 
 
 
@@ -22,8 +22,8 @@ function App() {
     <NarBar/>
     <Herosection/> 
     <Search/>
-    <Contain/>
-    {/* <Footer/> */}
+    <BlogCard/>
+    <Footer/>
     </div>
 
   )
