@@ -17,7 +17,7 @@ function Herosection(){
           <p className="text-gray-500">-Author</p>
           <h4 className="font-semibold text-lg" >Thompson P.</h4>
         </div>
-        <div id="content" cclassName="max-w-[400px] mx-auto md:mx-0">
+        <div id="content" className="max-w-[400px] mx-auto md:mx-0">
             <p className="text-sm md:text-base leading-relaxed">I am a pet enthusiast and freelance writer who specializes in animal behavior and care. With a 
               deep love for cats, I enjoy sharing insights on feline companionship and wellness. </p>
             <br/>

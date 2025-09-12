@@ -11,7 +11,7 @@ import {
 
 function Search() {
   const [isOpen, setIsOpen] = useState(true);
-  const [category, setCategory] = useState("Highlight"); // เพิ่ม state สำหรับ category
+  const [category, setCategory] = useState("Highlight"); 
   const filterbar = ["Highlight", "Cat", "Inspiration", "General"]
   return (
     <>
@@ -27,7 +27,12 @@ function Search() {
               {filterbar.map((item, i) => (
                 <button
                   key={i}
-                  className="px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-300 hover:text-black transition text-2xl hover:cursor-pointer "
+                  className={`px-4 py-2 rounded-xl text-gray-600  text-2xl  
+                  ${category === item?"bg-gray-300 text-black font-bold":"hover:bg-gray-300 transition hover:cursor-pointer"}
+                  `}
+                
+                  disabled={category === item}
+                  value={item} onClick={()=>setCategory(item)}
                 >
                   {item}
                 </button>
@@ -62,11 +67,15 @@ function Search() {
                     <SelectTrigger className="w-full py-3 rounded-sm text-muted-foreground">
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Highlight">Highlight</SelectItem>
-                      <SelectItem value="Cat">Cat</SelectItem>
-                      <SelectItem value="Inspiration">Inspiration</SelectItem>
-                      <SelectItem value="General">General</SelectItem>
+                    <SelectContent className="bg-white">
+                      {filterbar.map((item) => (
+                        <SelectItem
+                          key={item}
+                          value={item}
+                        >
+                          {item}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

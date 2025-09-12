@@ -3,13 +3,13 @@ import { blogPosts } from "/src/data/data-containner.jsx";
 function BlogCard() {
   return (
     <div className="w-[100%] flex flex-col justify-center items-center mb-[60px]">
-    <ul className="grid grid-cols-1 md:grid-cols-2 gap-8 list-none p-0 w-[70%] ">
+    <ul className="grid grid-cols-1 md:grid-cols-2 md:gap-8 list-none p-0 w-full md:w-[70%]  ">
       {blogPosts.map((item) => {
         return (
           <li key={item.id}>
             <div
               id="blogcard"
-              className="bg-white rounded-2xl shadow-lg overflow-hidden  
+              className="bg-white md:rounded-2xl md:shadow-lg overflow-hidden  
               hover:shadow-2xl hover:scale-105 transition-transformtransition-shadow duration-300 hover:cursor-pointer
               "
             >
