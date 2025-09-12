@@ -9,9 +9,8 @@ import {
 } from "@/components/ui/select"
 
 
-function Search() {
+function Search({ category, setCategory }) {
   const [isOpen, setIsOpen] = useState(true);
-  const [category, setCategory] = useState("Highlight"); 
   const filterbar = ["Highlight", "Cat", "Inspiration", "General"]
   return (
     <>
@@ -82,6 +81,7 @@ function Search() {
               </div>
               )}
         </div>
+
       </div>
     </>
   );

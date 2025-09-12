@@ -15,14 +15,14 @@ import BlogCard from './component/ArticleSection'
 
 function App() {
 
-
+    const [category, setCategory] = useState("Highlight");
 
   return (
     <div className="flex flex-col">
     <NarBar/>
     <Herosection/> 
-    <Search/>
-    <BlogCard/>
+    <Search category={category} setCategory={setCategory}/>
+    <BlogCard category={category}/>
     <Footer/>
     </div>
 
