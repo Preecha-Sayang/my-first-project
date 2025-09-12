@@ -16,7 +16,7 @@ function BlogCard() {
               <img
                 src={item.image}
                 alt="img-blog-card"
-                className="w-full h-[360px] object-cover"
+                className="w-full h-[360px] object-contain"
               />
 
               <div id="detail" className="p-6 flex flex-col gap-3">
