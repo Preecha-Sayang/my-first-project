@@ -1,7 +1,7 @@
 import { blogPosts } from "/src/data/data-containner.jsx";
 import axios from "axios";
 import { useState, useEffect } from "react";
-
+import { Link } from "react-router-dom";
 
 
 
@@ -72,12 +72,13 @@ function BlogCard({ category }) {
               hover:shadow-2xl hover:scale-105 transition-transformtransition-shadow duration-300 hover:cursor-pointer
               pb-[20px] pb:md-0"
             >
+              <Link to={`/post/${item.id}`}>
               <img
                 src={item.image}
                 alt="img-blog-card"
                 className="w-full h-[360px] object-contain"
               />
-
+              </Link>
               <div id="detail" className="p-6 flex flex-col gap-3">
                 <div
                   id="genres"
@@ -85,11 +86,11 @@ function BlogCard({ category }) {
                 >
                   {item.category}
                 </div>
-
+                <Link to={`/post/${item.id}`}>
                 <p className="text-xl font-semibold text-gray-900">
                   {item.title}
                 </p>
-
+                </Link>
                 <p className="text-gray-600 text-sm leading-relaxed">
                   {item.description}
                 </p>

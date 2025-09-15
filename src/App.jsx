@@ -1,13 +1,7 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import NarBar from './component/narbar'
-import Herosection from './component/herosection'
-import Footer from './component/footer'
-import Search from './component/search'
-import BlogCard from './component/ArticleSection'
-
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import HomePage from "./page/HomePage";
+import ViewPostPage from "./page/ViewPost";
+import NotFoundPage from "./component/NofoundPage";
 
 
 
@@ -15,15 +9,16 @@ import BlogCard from './component/ArticleSection'
 
 function App() {
 
-    const [category, setCategory] = useState("Highlight");
 
   return (
-    <div className="flex flex-col">
-    <NarBar/>
-    <Herosection/> 
-    <Search category={category} setCategory={setCategory}/>
-    <BlogCard category={category}/>
-    <Footer/>
+    <div className="App">
+      <Router>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+           <Route path="/post/:postId" element={<ViewPostPage/>} />
+           <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Router>
     </div>
 
   )
