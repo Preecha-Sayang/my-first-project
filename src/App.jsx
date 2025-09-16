@@ -3,6 +3,9 @@ import HomePage from "./page/HomePage";
 import ViewPostPage from "./page/ViewPost";
 import NotFoundPage from "./component/NofoundPage";
 import { Toaster } from "@/components/ui/sonner";
+import LoginPage from "./page/login";
+import SignUp from "./page/signin";
+
 
 
 
@@ -17,6 +20,8 @@ function App() {
           <Route path="/" element={<HomePage />} />
            <Route path="/post/:postId" element={<ViewPostPage/>} />
            <Route path="*" element={<NotFoundPage />} />
+           <Route path="/login" element={<LoginPage/>}/>
+           <Route path="/SignUp" element={<SignUp/>}/>
         </Routes>
       </Router>
       <Toaster

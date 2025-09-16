@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 function NarBar() {
   const [isOpen, setIsOpen] = useState(false); 
@@ -8,13 +9,16 @@ function NarBar() {
       <img src="/hh..png" alt="logo" className="hover:cursor-pointer" />
 
       <div className='gap-[8px] hidden md:flex'>
+        <Link to={"/login"}>
         <button type="button" className="w-[120px] h-[40px] bg-white border-2 border-gray-400 rounded-4xl flex justify-center items-center hover:cursor-pointer hover:bg-black hover:text-white">
           Login
         </button>
-
+        </Link >
+        <Link to={"/SignUp"}>
         <button type="button" className="w-[120px] h-[40px] bg-black text-white rounded-4xl flex justify-center items-center hover:cursor-pointer hover:bg-white hover:border-2 hover:border-gray-400 hover:text-black">
           Sign up
         </button>
+        </Link>
       </div>
 
       {/* Hamburger*/}
