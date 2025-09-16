@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import HomePage from "./page/HomePage";
 import ViewPostPage from "./page/ViewPost";
 import NotFoundPage from "./component/NofoundPage";
-
+import { Toaster } from "@/components/ui/sonner";
 
 
 
@@ -19,6 +19,11 @@ function App() {
            <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Router>
+      <Toaster
+        toastOptions={{
+          unstyled: true,
+        }}
+      />
     </div>
 
   )

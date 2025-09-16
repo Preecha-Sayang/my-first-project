@@ -6,11 +6,23 @@ import { Link } from "react-router-dom";
 
 
 
-function BlogCard({ category }) {
+function BlogCard({ category, keyword }) {
   const [data, setData] = useState([]);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+
+  const [debouncedKeyword, setDebouncedKeyword] = useState(keyword);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedKeyword(keyword);
+      setPage(1); 
+    }, 500); 
+
+    return () => clearTimeout(handler);
+  }, [keyword]);
+  
   //
   useEffect(() => {
     async function fetchdata() {
@@ -21,7 +33,8 @@ function BlogCard({ category }) {
             params: {
               page: page,
               limit: 6,
-              category: categoryParam
+              category: categoryParam,
+              keyword: debouncedKeyword?.trim() || undefined
             }
           });
           if (page === 1) {
@@ -41,20 +54,14 @@ function BlogCard({ category }) {
       }
     }
     fetchdata();
-  }, [page, category]);
-
-  useEffect(() => {
-    setPage(1); 
-  }, [category]);
+  }, [page, category, debouncedKeyword]);
 
 
-  const filteredData =
-  category === "Highlight"
-    ? data
-    : data.filter((item) => item.category === category);
 
 
-    function hanndlepage(){
+  const filteredData = data;
+
+    function handlePage(){
       setPage((prev)=>prev+1)
     }
 
@@ -124,11 +131,11 @@ function BlogCard({ category }) {
           {hasMore && (
             <div className="text-center mt-8">
               <button
-                onClick={()=>{hanndlepage()}}
-                 disabled={isLoading}
+                onClick={()=>{handlePage()}}
+                disabled={isLoading || !hasMore}
                 className="hover:text-muted-foreground font-medium underline"
               >
-               {isLoading ? "Loading..." : "View more"}
+               {isLoading ? "Loading..." : hasMore ? "View more" : "No more posts"}
               </button>
             </div>
           )}

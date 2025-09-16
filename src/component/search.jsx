@@ -1,5 +1,4 @@
 import { Search as SearchIcon } from "lucide-react"; // ใช้ icon จาก lucide-react
-import { useState } from "react";
 import {
   Select,
   SelectContent,
@@ -7,11 +6,46 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import axios from "axios";
+import { useState, useEffect } from "react";
 
 
-function Search({ category, setCategory }) {
+function Search({ category, setCategory , keyword, setKeyword}) {
   const [isOpen, setIsOpen] = useState(true);
   const filterbar = ["Highlight", "Cat", "Inspiration", "General"]
+  const [inputValue, setInputValue] = useState(""); // <-- state ของ input
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+
+  useEffect(() => {
+  if (!inputValue.trim()) {
+    setSuggestions([]);
+    return;
+  }
+
+  const handler = setTimeout(async () => {
+    try {
+      const res = await axios.get("https://blog-post-project-api.vercel.app/posts", {
+        params: { keyword: inputValue, limit: 6 }
+      });
+      setSuggestions(res.data.posts);
+      setShowSuggestions(true);
+    } catch (err) {
+      console.log(err);
+    }
+  }, 400);
+
+  return () => clearTimeout(handler);
+}, [inputValue]);
+
+
+     const handleSelect = (item) => {
+    setKeyword(item.title);   // ส่งค่าไปให้ BlogCard (ใช้ค้นหา)
+    setInputValue("");        // ล้าง input
+    setShowSuggestions(false);
+  };
+
   return (
     <>
       <div className="w-[100%] flex flex-col items-center mb-[60px] ">
@@ -38,14 +72,30 @@ function Search({ category, setCategory }) {
               ))}
             </div>
 
-            <div className="flex items-center bg-white px-4 py-2 rounded-xl shadow-sm w-[250px]">
+            <div className="relative flex items-center bg-white px-4 py-2 rounded-xl shadow-sm w-[250px]">
               <input
                 type="text"
                 placeholder="Search"
                 className="flex-1 outline-none bg-transparent text-gray-700"
+                value={inputValue} // <-- ใช้ inputValue
+                onChange={(e) => setInputValue(e.target.value)}
               />
               <SearchIcon className="w-4 h-4 text-gray-400" />
+                            {showSuggestions && suggestions.length > 0 && (
+                <ul className="absolute top-[110%] left-0 w-full bg-white shadow-lg rounded-lg overflow-hidden z-20">
+                  {suggestions.map((item, i) => (
+                    <li
+                      key={i}
+                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                      onClick={() => handleSelect(item)}
+                    >
+                      {item.title}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
+
           </div>
 
               {/* Mobile */}
@@ -57,6 +107,8 @@ function Search({ category, setCategory }) {
                     type="text"
                     placeholder="Search"
                     className="flex-1 outline-none bg-transparent text-gray-700"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
                   />
                   <SearchIcon className="w-4 h-4 text-gray-400" />
                 </div>

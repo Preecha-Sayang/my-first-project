@@ -116,3 +116,16 @@ h4 {
   border-radius: 12px;
 }
 
+.link-curcle {
+  background-color: white;
+  padding: 0.75rem; 
+  border-radius: 9999px; 
+  border: 1px solid currentColor; 
+  color: var(--foreground); 
+  transition: color 0.2s, border-color 0.2s; 
+}
+
+.link-curcle:hover {
+  border-color: var(--muted-foreground);
+  color: var(--muted-foreground);
+}
