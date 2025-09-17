@@ -1,113 +1,165 @@
 import { useState } from "react";
 
-
 export default function SignupForm() {
   const [formData, setFormData] = useState({
-    name: '',
-    username: '',
-    email: '',
-    password: ''
+    name: "",
+    username: "",
+    email: "",
+    password: "",
   });
+
+  const [errors, setErrors] = useState({
+    email: "Email must be a valid email",
+    password: "Password must be at least 6 characters"
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { id, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [id]: value
+      [id]: value,
     }));
-  };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (formData.name && formData.username && formData.email && formData.password) {
-      alert(`Sign up successful! Welcome, ${formData.name}!`);
+    // Clear errors when user starts typing
+    if (errors[id]) {
+      setErrors((prev) => ({
+        ...prev,
+        [id]: ""
+      }));
     }
   };
 
+  const validateForm = () => {
+    const newErrors = {};
+    const { name, username, email, password } = formData;
 
+    // ตรวจสอบอีเมล
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      newErrors.email = "Email must be a valid email";
+    }
+
+    // ตรวจสอบรหัสผ่าน
+    if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    // simulate การส่งข้อมูล
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    alert(`Sign up successful! Welcome, ${formData.name}!`);
+    setIsSubmitting(false);
+    setFormData({
+      name: "",
+      username: "",
+      email: "",
+      password: "",
+    });
+    setErrors({});
+  };
 
   return (
-    <div className="bg-gray-100 min-h-screen flex items-center justify-center p-5 mt-10 md:mt-[50px]">
-      <div className="bg-gray-300 p-12 rounded-lg  w-[70%] text-center shadow-md">
-        <h1 className="text-3xl font-semibold text-gray-800 mb-10">Sign up</h1>
+    <div className="bg-gray-100 min-h-screen flex items-center justify-center p-5 mt-[100px]">
+      <div className="bg-gray-200 p-8 rounded-lg w-[80%] text-center shadow-lg">
+        <h1 className="text-3xl font-bold text-gray-800 mb-8">Sign up</h1>
         
-        <div className="space-y-5">
+        <div className="space-y-4">
           <div className="text-left">
-            <label className="block text-sm font-medium text-gray-600 mb-2" htmlFor="name">
+            <label htmlFor="name" className="block text-sm font-medium text-gray-600 mb-2">
               Name
             </label>
-            <input 
-              type="text" 
-              id="name" 
+            <input
+              type="text"
+              id="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full px-4 py-3 bg-white rounded-md text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Full name"
-              required
+              className="w-full px-4 py-3 bg-white rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div className="text-left">
-            <label className="block text-sm font-medium text-gray-600 mb-2" htmlFor="username">
+            <label htmlFor="username" className="block text-sm font-medium text-gray-600 mb-2">
               Username
             </label>
-            <input 
-              type="text" 
-              id="username" 
+            <input
+              type="text"
+              id="username"
               value={formData.username}
               onChange={handleChange}
-              className="w-full px-4 py-3 bg-white rounded-md text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Username"
-              required
+              className="w-full px-4 py-3 bg-white rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div className="text-left">
-            <label className="block text-sm font-medium text-gray-600 mb-2" htmlFor="email">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-600 mb-2">
               Email
             </label>
-            <input 
-              type="email" 
-              id="email" 
+            <input
+              type="email"
+              id="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full px-4 py-3 bg-white rounded-md text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Email"
-              required
+              className={`w-full px-4 py-3 bg-white rounded-md text-gray-800 focus:outline-none focus:ring-2 ${
+                errors.email ? 'border-2 border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
+              }`}
             />
+            {errors.email && (
+              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+            )}
           </div>
 
           <div className="text-left">
-            <label className="block text-sm font-medium text-gray-600 mb-2" htmlFor="password">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-600 mb-2">
               Password
             </label>
-            <input 
-              type="password" 
-              id="password" 
+            <input
+              type="password"
+              id="password"
               value={formData.password}
               onChange={handleChange}
-              className="w-full px-4 py-3 bg-white rounded-md text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Password"
-              required
+              className={`w-full px-4 py-3 bg-white rounded-md text-gray-800 focus:outline-none focus:ring-2 ${
+                errors.password ? 'border-2 border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
+              }`}
             />
+            {errors.password && (
+              <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+            )}
           </div>
 
-          <button 
+          <button
             onClick={handleSubmit}
-            className="w-full px-4 py-3 bg-gray-800 text-white rounded-md font-medium hover:bg-gray-700 transition-colors mt-5"
+            disabled={isSubmitting}
+            className={`w-full px-6 py-3 rounded-full font-medium transition-colors mt-6 ${
+              isSubmitting
+                ? "bg-gray-500 cursor-not-allowed text-white"
+                : "bg-gray-800 text-white hover:bg-gray-700"
+            }`}
           >
-            Sign up
+            {isSubmitting ? "Signing up..." : "Sign up"}
           </button>
         </div>
 
         <div className="mt-6 text-sm text-gray-600">
-          Already have an account?
-          <a href={'/login'}
-            className="text-gray-800 underline font-medium hover:text-blue-600 bg-transparent border-none cursor-pointer"
+          Already have an account?{" "}
+          <button
+            type="button"
+            className="text-gray-800 underline font-medium hover:text-blue-600"
           >
             Log in
-          </a>
+          </button>
         </div>
       </div>
     </div>
