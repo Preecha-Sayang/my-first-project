@@ -1,13 +1,15 @@
 
-import AdminLoginPage from "@/component/after-login/login";
-import NarBar from "@/component/narbar";
+import AdminLoginPage from "@/component/login/login";
+import NavBar from "../component/narbar";
 
 
 
 export default function LoginPage() {
+
+
   return (
     <div className="flex flex-col min-h-screen">
-      <NarBar />
+       <NavBar />
       <div className="flex-grow">
         <AdminLoginPage/>
       </div>

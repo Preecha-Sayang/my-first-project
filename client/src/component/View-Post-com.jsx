@@ -5,7 +5,7 @@ import { useParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import { TextareaDemo } from "./textxara";
 import { Linkedin, Twitter, Instagram, SmilePlus, Copy, X } from 'lucide-react';
-import { comments } from "@/data/comment";
+
 import { toast } from "sonner";
 
 
@@ -19,7 +19,7 @@ export default function ViewPost() {
     const [error, setError] = useState(null);
 
     async function fetchdata () {
-        try {const result = await axios.get(`https://blog-post-project-api.vercel.app/posts/${postId}`)
+        try {const result = await axios.get(`http://localhost:4001/posts/${postId}`)
             setPost(result.data)
               setError(null);
          }catch(e){
@@ -33,11 +33,11 @@ export default function ViewPost() {
     if (!post) return <p>Loading...</p>;
     if (error) return <p>Error loading post.</p>;
 
-const handleClick = () => {
+const handleClick = () => { 
     if (!isLoggedIn) {
         setShowLoginModal(true);
         return;
-    }
+    }   // เช็คว่าล็อคอินแล้วหรือยัง
 };
 
 
@@ -122,7 +122,7 @@ const handleClick = () => {
                         </div>
                     </div>
                         <div className="space-y-6 px-4 my-[20px]">
-                        {comments.map((comment, index) => (
+                        {post.comments && post.comments.map((comment, index) => (
                         <div key={index} className="flex flex-col gap-[20px] mb-4">
                             <div className="flex space-x-4">
                             <div className="flex-shrink-0">
@@ -140,7 +140,7 @@ const handleClick = () => {
                             </div>
                             </div>
                             <p className=" text-gray-600">{comment.comment}</p>
-                            {index < comments.length - 1 && (
+                            {index < post.length - 1 && (
                             <hr className="border-gray-300 my-4" />
                             )}
                             </div>

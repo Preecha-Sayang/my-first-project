@@ -9,8 +9,12 @@ function Herosection(){
         <h1 className="!text-3xl md:!text-4xl !font-bold" >Stay Informed, Stay Inspired</h1>
         <p className="text-gray-600 text-sm md:text-base leading-relaxed">Discover a World of Knowledge at Your Fingertips. Your Daily Dose of Inspiration and Information.</p>
       </div>
+
+
         {/* img */}
       <img src="./herosection.png" alt="hero-section-img"  className="w-[90%] h-[500px] md:w-1/3 md:h-[530px] object-contain"/>
+        
+        
         {/* left */}
       <div id="left-content " className="w-full md:w-1/3 flex flex-col gap-4 text-left">
         <div id="author">

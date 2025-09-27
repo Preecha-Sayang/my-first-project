@@ -7,10 +7,6 @@ import Footer from '@/component/footer';
 
 
 
-
-
-
-
 function HomePage() {
 
     const [category, setCategory] = useState("Highlight");

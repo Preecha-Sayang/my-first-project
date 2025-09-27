@@ -5,11 +5,12 @@ import NotFoundPage from "./component/NofoundPage";
 import { Toaster } from "@/components/ui/sonner";
 import LoginPage from "./page/login";
 import SignUp from "./page/signin";
+import Profilepage from "./page/profile";
 
 
 
 
-
+  
 function App() {
 
 
@@ -22,6 +23,7 @@ function App() {
            <Route path="*" element={<NotFoundPage />} />
            <Route path="/login" element={<LoginPage/>}/>
            <Route path="/SignUp" element={<SignUp/>}/>
+           <Route path="/profile" element={<Profilepage/>}/>
         </Routes>
       </Router>
       <Toaster

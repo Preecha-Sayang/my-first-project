@@ -1,5 +1,5 @@
 
-import SignupForm from "@/component/after-login/signin";
+import SignupForm from "@/component/login/signin";
 import NarBar from "@/component/narbar";
 
 

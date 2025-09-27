@@ -1,4 +1,4 @@
-import { blogPosts } from "/src/data/data-containner.jsx";
+
 import axios from "axios";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 
 function BlogCard({ category, keyword }) {
   const [data, setData] = useState([]);
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -29,7 +29,7 @@ function BlogCard({ category, keyword }) {
        setIsLoading(true);
       try {
         const categoryParam = category === "Highlight" ? "" : category;
-        const result = await axios.get("https://blog-post-project-api.vercel.app/posts", {
+        const result = await axios.get("http://localhost:4001/posts", {
             params: {
               page: page,
               limit: 6,
