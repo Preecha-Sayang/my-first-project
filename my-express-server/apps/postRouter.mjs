@@ -6,7 +6,7 @@ const postRouter = Router();
 
 postRouter.post("/", validatePostData, async (req, res) => {
   // ลอจิกในการเก็บข้อมูลของโพสต์ลงในฐานข้อมูล
-
+console.log("Body:", req.body);
   // 1) Access ข้อมูลใน Body จาก Request ด้วย req.body
   const newPost = req.body;
 

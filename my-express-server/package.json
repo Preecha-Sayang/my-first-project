@@ -13,6 +13,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@supabase/supabase-js": "^2.58.0",
     "cors": "^2.8.5",
     "donet": "^1.0.1",
     "dotenv": "^17.2.2",

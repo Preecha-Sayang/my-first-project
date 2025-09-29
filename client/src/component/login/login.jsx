@@ -25,8 +25,13 @@ export default function AdminLoginPage() {
       setIsErrorPassword(false);
     }
 
-    if (valid) {
-      console.log("Logging in with:", { email, password });
+    if (!valid) {
+      
+      try{
+
+      }catch(){
+        
+      }
       // Add login logic here
     }
   };

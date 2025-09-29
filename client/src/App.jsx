@@ -10,13 +10,14 @@ import Profilepage from "./page/profile";
 
 
 
+
+
   
 function App() {
 
 
   return (
     <div className="App">
-      <Router>
         <Routes>
           <Route path="/" element={<HomePage />} />
            <Route path="/post/:postId" element={<ViewPostPage/>} />
@@ -25,7 +26,6 @@ function App() {
            <Route path="/SignUp" element={<SignUp/>}/>
            <Route path="/profile" element={<Profilepage/>}/>
         </Routes>
-      </Router>
       <Toaster
         toastOptions={{
           unstyled: true,

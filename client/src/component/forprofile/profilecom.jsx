@@ -4,6 +4,8 @@ function ProfileCom() {
   const [names, setNames] = useState("");
   const [usernames, setUsernames] = useState("");
   const [emails, setEmails] = useState("");
+
+
   const image = "/herosection.png";
   return (
     <div className="bg-gray-400 rounded-2xl p-[40px] flex flex-col gap-[40px]">
@@ -51,7 +53,6 @@ function ProfileCom() {
               type="text"
               id="Email"
               value={emails}
-              onChange={(e) => setEmails(e.target.value)}
               disabled
               placeholder="test"
               className="h-[50px] bg-gray-400 p-4 rounded-xl"

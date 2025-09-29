@@ -50,18 +50,29 @@ export default function SignupForm() {
     return Object.keys(newErrors).length === 0;
   };
 
+
   const handleSubmit = async () => {
-    if (!validateForm()) {
-      return;
+  if (!validateForm()) return;
+
+  setIsSubmitting(true);
+
+  try {
+    const res = await fetch("http://localhost:4001/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Registration failed");
     }
 
-    setIsSubmitting(true);
+    alert(`✅ Sign up successful! Welcome, ${data.user.name || data.user.username}!`);
 
-    // simulate การส่งข้อมูล
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    alert(`Sign up successful! Welcome, ${formData.name}!`);
-    setIsSubmitting(false);
     setFormData({
       name: "",
       username: "",
@@ -69,7 +80,12 @@ export default function SignupForm() {
       password: "",
     });
     setErrors({});
-  };
+  } catch (err) {
+    alert(`❌ Sign up failed: ${err.message}`);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <div className="bg-gray-100 min-h-screen flex items-center justify-center p-5 mt-[100px]">

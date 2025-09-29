@@ -3,10 +3,17 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 import "tailwindcss";
+import { BrowserRouter } from "react-router-dom";
+import { AuthProvider } from "./context/authentication";
+import jwtInterceptor from "./utils/jwtInterceptor.js";
 
-
+jwtInterceptor();
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <BrowserRouter>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </BrowserRouter>
   </StrictMode>,
 )
