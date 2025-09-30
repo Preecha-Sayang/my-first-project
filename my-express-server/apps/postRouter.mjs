@@ -1,12 +1,13 @@
 import { Router } from "express";
 import validatePostData from "../middleware/postValidation.mjs";
 import connectionPool from "../utils/db.mjs";
+import protectUser from "../middleware/protectUser.mjs";
 
 const postRouter = Router();
 
-postRouter.post("/", validatePostData, async (req, res) => {
+postRouter.post("/", validatePostData, protectUser, async (req, res) => {
   // ลอจิกในการเก็บข้อมูลของโพสต์ลงในฐานข้อมูล
-console.log("Body:", req.body);
+  console.log("Body:", req.body);
   // 1) Access ข้อมูลใน Body จาก Request ด้วย req.body
   const newPost = req.body;
 
@@ -145,6 +146,10 @@ postRouter.get("/:postId", async (req, res) => {
   // ลอจิกในอ่านข้อมูลโพสต์ด้วย Id ในระบบ
   // 1) Access ตัว Endpoint Parameter ด้วย req.params
   const postIdFromClient = req.params.postId;
+  const limit = 3; // จำนวน comment ที่จะแสดงต่อหน้า
+  const page = parseInt(req.query.page) || 1;
+  const offset = (page - 1) * limit;
+
 
   try {
     // 2) เขียน Query เพื่ออ่านข้อมูลโพสต์ ด้วย Connection Pool
@@ -166,8 +171,40 @@ postRouter.get("/:postId", async (req, res) => {
       });
     }
 
+    const post = results.rows[0];
+
+    const commentsQuery = await connectionPool.query(
+      `
+        SELECT c.comment_text, c.created_at, c.user_id, u.name, u.profile_pic AS image
+          FROM comments c
+          INNER JOIN users u ON c.user_id = u.id
+          WHERE c.post_id = $1
+          ORDER BY c.created_at DESC
+          LIMIT $2 OFFSET $3
+        `,
+      [postIdFromClient, limit, offset]
+    );
+
+    const countResult = await connectionPool.query(
+      `SELECT COUNT(*) FROM comments WHERE post_id = $1`,
+      [postIdFromClient]
+    );
+
+    const totalComments = parseInt(countResult.rows[0].count);
+    const totalPages = Math.ceil(totalComments / limit);
+
+
+    // แนบ comments เข้าใน post object
+    post.comments = commentsQuery.rows;
+    post.commentsPagination = {
+      page,
+      totalPages,
+      totalComments,
+      limit,
+    };
+
     // 3) Return ตัว Response กลับไปหา Client
-    return res.status(200).json(results.rows[0]);
+    return res.status(200).json(post);
   } catch {
     return res.status(500).json({
       message: `Server could not read post because database issue`,
@@ -175,7 +212,7 @@ postRouter.get("/:postId", async (req, res) => {
   }
 });
 
-postRouter.put("/:postId", validatePostData, async (req, res) => {
+postRouter.put("/:postId", validatePostData, protectUser, async (req, res) => {
   // ลอจิกในการแก้ไขข้อมูลโพสต์ด้วย Id ในระบบ
 
   // 1) Access ตัว Endpoint Parameter ด้วย req.params
@@ -227,7 +264,7 @@ postRouter.put("/:postId", validatePostData, async (req, res) => {
   }
 });
 
-postRouter.delete("/:postId", async (req, res) => {
+postRouter.delete("/:postId", protectUser, async (req, res) => {
   // ลอจิกในการลบข้อมูลโพสต์ด้วย Id ในระบบ
 
   // 1) Access ตัว Endpoint Parameter ด้วย req.params
@@ -257,5 +294,80 @@ postRouter.delete("/:postId", async (req, res) => {
     });
   }
 });
+
+postRouter.post("/:postId/comments", protectUser, async (req, res) => {
+  const postId = req.params.postId;
+  const userId = req.user.id; // ได้จาก protectUser
+  const { comment } = req.body;
+  
+
+  if (!comment || comment.trim() === "") {
+    return res.status(400).json({ message: "Comment is required" });
+  }
+
+  try {
+    const result = await connectionPool.query(
+      `INSERT INTO comments (post_id, user_id, comment_text, created_at)
+       VALUES ($1, $2, $3, NOW()) RETURNING *`,
+      [postId, userId, comment]
+    );
+
+    res.status(201).json({
+      message: "Comment created successfully",
+      comment: result.rows[0],
+    });
+  } catch (err) {
+    console.error("Error creating comment:", err);
+    res.status(500).json({ message: "Database error" });
+  }
+});
+
+
+postRouter.post("/:postId/like", protectUser,async (req, res) => {
+  const postId = req.params.postId;
+  const userId = req.user.id;
+
+  try {
+    // 1. ตรวจสอบว่าผู้ใช้กด Like โพสต์นี้ไปแล้วหรือยัง
+    const { rows: existingLikes } = await connectionPool.query(
+      "SELECT * FROM likes WHERE post_id = $1 AND user_id = $2",
+      [postId, userId]
+    );
+
+    if (existingLikes.length > 0) {
+      // 2. ถ้ามี Like อยู่แล้ว => ลบ Like (ยกเลิก)
+      await connectionPool.query(
+        "DELETE FROM likes WHERE post_id = $1 AND user_id = $2",
+        [postId, userId]
+      );
+
+      // ลด likes_count ลง 1 (ไม่ให้ต่ำกว่า 0)
+      await connectionPool.query(
+        "UPDATE posts SET likes_count = GREATEST(likes_count - 1, 0) WHERE id = $1",
+        [postId]
+      );
+
+      return res.status(200).json({ message: "Like removed" });
+    } else {
+      // 3. ถ้ายังไม่มี Like => เพิ่ม Like ใหม่
+      await connectionPool.query(
+        "INSERT INTO likes (post_id, user_id) VALUES ($1, $2)",
+        [postId, userId]
+      );
+
+      // เพิ่ม likes_count ขึ้น 1
+      await connectionPool.query(
+        "UPDATE posts SET likes_count = likes_count + 1 WHERE id = $1",
+        [postId]
+      );
+
+      return res.status(201).json({ message: "Post liked" });
+    }
+  } catch (err) {
+    console.error("Error toggling like:", err);
+    return res.status(500).json({ message: "Database error" });
+  }
+});
+
 
 export default postRouter;

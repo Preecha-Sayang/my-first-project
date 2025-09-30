@@ -1,14 +1,14 @@
 import { useState } from "react";
-
-
+import axios from "axios";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isErrorEmail, setIsErrorEmail] = useState(false);
   const [isErrorPassword, setIsErrorPassword] = useState(false);
+  const [error, setError] = useState(""); // เพิ่ม error message
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     let valid = true;
 
     if (!email.trim()) {
@@ -25,14 +25,23 @@ export default function AdminLoginPage() {
       setIsErrorPassword(false);
     }
 
-    if (!valid) {
-      
-      try{
+    if (!valid) return;
 
-      }catch(){
-        
-      }
-      // Add login logic here
+    try {
+      const res = await axios.post("http://localhost:4001/auth/login", {
+        email,
+        password,
+      });
+
+      const { access_token } = res.data;
+
+      // บันทึก token และ redirect หรือแสดงข้อความสำเร็จ
+      localStorage.setItem("token", access_token);
+      alert("Login success!");
+      setError("");
+      // window.location.href = "/admin/dashboard"; // หรือใช้ router
+    } catch (err) {
+      setError(err.response?.data?.error || "Login failed");
     }
   };
 
@@ -43,13 +52,14 @@ export default function AdminLoginPage() {
           <h2 className="text-2xl font-medium text-center mb-8 text-gray-800">
             Log in
           </h2>
-          
+
+          {error && (
+            <div className="mb-4 text-red-600 text-sm text-center">{error}</div>
+          )}
+
           <div className="space-y-6">
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm text-gray-600 mb-2"
-              >
+              <label htmlFor="email" className="block text-sm text-gray-600 mb-2">
                 Email
               </label>
               <input
@@ -70,10 +80,7 @@ export default function AdminLoginPage() {
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm text-gray-600 mb-2"
-              >
+              <label htmlFor="password" className="block text-sm text-gray-600 mb-2">
                 Password
               </label>
               <input
@@ -105,7 +112,7 @@ export default function AdminLoginPage() {
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Don't have any account?{" "}
+              Don't have an account?{" "}
               <a href="/SignUp" className="text-gray-800 hover:underline">
                 Sign up
               </a>

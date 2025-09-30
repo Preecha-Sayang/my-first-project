@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Bell,
@@ -8,16 +8,50 @@ import {
   RotateCw,
   UserPen,
 } from "lucide-react";
+import axios from "axios";
 
 function NavBar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [login, setLogin] = useState(true);
+  const [login, setLogin] = useState(false);
   const [dorpdown, setdropdown] = useState(false);
   const [commentdrop, setcommentdrop] = useState(false);
+  const [name, setName] = useState(""); // ✅ ใช้ useState
+  const [image, setImage] = useState(""); // ✅ ใช้ useState
 
-  const name = "preehca";
-  const image = "/herosection.png";
   const hasNewComment = 2;
+
+ useEffect(() => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    setLogin(false);
+    return;
+  }
+
+  const fetchuser = async () => {
+    try {
+      const res = await axios.get("http://localhost:4001/auth/get-user", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setName(res.data.name);
+      setImage(res.data.profilePic);
+      setLogin(true); // ✅ กำหนด login true เฉพาะเมื่อ fetch สำเร็จ
+    } catch (e) {
+      console.error("User fetch failed:", e);
+      setLogin(false); // ✅ login fail ถ้า token ไม่ valid
+    }
+  };
+
+  fetchuser();
+}, []);
+
+  function logout() {
+    localStorage.removeItem("token");
+    setLogin(false);
+    window.location.reload();
+  }
 
   // ฟังก์ชันปิดเมนู mobile หลังเลือก
   const handleMobileClose = () => {
@@ -82,7 +116,7 @@ function NavBar() {
               onClick={() => setdropdown(!dorpdown)}
             >
               <img
-                src={image}
+                src={image || "/hh..png"}
                 alt="image-profile"
                 className="w-10 h-10 rounded-full object-cover"
               />
@@ -124,8 +158,9 @@ function NavBar() {
                 <button
                   className="w-full text-left px-4 py-2 text-sm text-gray-500 flex flex-row gap-1
                    hover:bg-gray-100"
+                  onClick={() => logout()}
                 >
-                  <LogOut />
+                  <LogOut/>
                   <p>Logout</p>
                 </button>
               </div>

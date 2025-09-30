@@ -29,7 +29,7 @@ function AuthProvider(props) {
     try {
       setState((prevState) => ({ ...prevState, getUserLoading: true }));
       const response = await axios.get(
-        "http://localhost:5000/auth/get-user"
+        "http://localhost:4001/auth/get-user"
       );
       setState((prevState) => ({
         ...prevState,
@@ -55,7 +55,7 @@ function AuthProvider(props) {
     try {
       setState((prevState) => ({ ...prevState, loading: true, error: null }));
       const response = await axios.post(
-        "http://localhost:5000/auth/login",
+        "http://localhost:4001/auth/login",
         data
       );
       const token = response.data.access_token;
@@ -80,7 +80,7 @@ function AuthProvider(props) {
     try {
       setState((prevState) => ({ ...prevState, loading: true, error: null }));
       await axios.post(
-        "http://localhost:5000/auth/register",
+        "http://localhost:4001/auth/register",
         data
       );
       setState((prevState) => ({ ...prevState, loading: false, error: null }));

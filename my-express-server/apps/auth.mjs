@@ -87,7 +87,7 @@ authRouter.post("/login", async (req, res) => {
           error: "Your password is incorrect or this email doesn't exist",
         });
       }
-      return res.status(400).json({ error: error.message });
+      return res.status(402).json({ error: error.message });
     }
 
     return res.status(200).json({
