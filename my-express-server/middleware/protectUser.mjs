@@ -15,7 +15,10 @@ const protectUser = async (req, res, next) => {
 
   try {
     // ใช้ Supabase ตรวจสอบ token และดึงข้อมูลผู้ใช้
-    const { data, error } = await supabase.auth.getUser(token);
+    console.log("🔐 Token:", token);
+
+const { data, error } = await supabase.auth.getUser(token);
+console.log("🧑‍💼 User from token:", data?.user);
 
     if (error || !data.user) {
       return res.status(401).json({ error: "Unauthorized: Invalid token" });

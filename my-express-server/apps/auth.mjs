@@ -1,11 +1,15 @@
 import { Router } from "express";
 import { createClient } from "@supabase/supabase-js";
 import connectionPool from "../utils/db.mjs";
+import multer from "multer";
+import protectUser from "../middleware/protectUser.mjs";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
 );
+
+const upload = multer({ storage: multer.memoryStorage() });
 const authRouter = Router();
 
 // จะเพิ่ม routes ต่างๆ ที่นี่
@@ -184,5 +188,89 @@ authRouter.put("/reset-password", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+authRouter.post("/upload-profile-pic", protectUser, upload.single("profilePic"), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+
+    const userId = req.user.id;
+    const fileBuffer = req.file.buffer;
+    const fileName = `profile-pics/${userId}-${Date.now()}.png`;
+
+    // ⬆️ Upload ไป Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from("my-personal0blog")
+      .upload(fileName, fileBuffer, {
+        contentType: req.file.mimetype,
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error("Upload Error:", uploadError.message);
+      return res.status(500).json({ error: uploadError.message });
+    }
+
+    // ⬇️ Get Public URL
+    const { data: urlData } = supabase.storage
+      .from("my-personal0blog")
+      .getPublicUrl(fileName);
+
+    const publicURL = urlData?.publicUrl;
+
+    if (!publicURL) {
+      return res.status(500).json({ error: "Failed to retrieve public URL" });
+    }
+
+    console.log("📸 Uploaded Image URL:", publicURL);
+
+    // ✅ Update DB
+    const query = `UPDATE users SET profile_pic = $1 WHERE id = $2 RETURNING *`;
+    const values = [publicURL, userId];
+    const { rows } = await connectionPool.query(query, values);
+
+    console.log("📦 Updated User Row:", rows);
+
+    res.status(200).json({
+      message: "Profile picture updated",
+      profilePic: publicURL,
+    });
+  } catch (error) {
+    console.error("❌ Upload failed:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+authRouter.put("/update-profile", protectUser, async (req, res) => {
+  const userId = req.user.id; // ได้จาก middleware protectUser
+  const { name, username } = req.body;
+
+  if (!name || !username) {
+    return res.status(400).json({ error: "Name and username are required" });
+  }
+
+  try {
+    // ตรวจสอบว่ามี username ซ้ำกับคนอื่นหรือไม่ (ยกเว้นตัวเอง)
+    const usernameCheckQuery = `
+      SELECT * FROM users WHERE username = $1 AND id <> $2
+    `;
+    const { rows: existingUser } = await connectionPool.query(usernameCheckQuery, [username, userId]);
+
+    if (existingUser.length > 0) {
+      return res.status(400).json({ error: "This username is already taken" });
+    }
+
+    // อัปเดตข้อมูล user ในฐานข้อมูล
+    const updateQuery = `
+      UPDATE users SET name = $1, username = $2 WHERE id = $3 RETURNING *
+    `;
+    const { rows } = await connectionPool.query(updateQuery, [name, username, userId]);
+
+    res.status(200).json({ message: "Profile updated successfully", user: rows[0] });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 
 export default authRouter;
