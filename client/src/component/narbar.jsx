@@ -130,15 +130,19 @@ function NavBar() {
 
             {dorpdown && (
               <div className="absolute right-20 mt-2 w-[200px] bg-white rounded-md shadow-lg z-10 py-2 border">
-                <Link className=" px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex flex-row gap-1">
+                <Link to="/profile" 
+                state={{ category: "Profile" }}
+                className=" px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex flex-row gap-1"
+                >
                   <UserPen />
                   <p>Profile</p>
                 </Link>
 
                 {/* resetpassword */}
-                <Link
-                  className=" px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex flex-row gap-1
+                <Link to= "/profile"
+                className=" px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex flex-row gap-1
                 hover:cursor-pointer"
+                state={{ category: "Reset password" }}
                 >
                   <RotateCw />
                   <p>Reset password</p>

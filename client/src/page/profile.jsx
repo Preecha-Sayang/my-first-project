@@ -1,15 +1,55 @@
 import NavBar from "@/component/narbar";
 import ProfileCom from "@/component/forprofile/profilecom";
 import { RotateCw, UserPen } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ResetPassword from "@/component/forprofile/forgetpassword";
+import axios from "axios";
+import { useNavigate, useLocation } from "react-router-dom";
 
 
 function Profilepage() {
-  const [category , iscategory] = useState("Profile")
-  const name = "preehca";
-  const image = "/herosection.png";
+  const location = useLocation();
+  const initialCategory = location.state?.category || "Profile";
+  
+  const [category , iscategory] = useState(initialCategory)
+  const [name , isname] = useState("")
+  const [picture, ispicture] = useState("")
+  const navigate = useNavigate();
+  
 
+  async function fetchdata(){
+    const token = localStorage.getItem("token");
+  try{
+    const result = await axios.get("http://localhost:4001/auth/get-user",{
+      header:{
+        Authorization: `Bearer ${token}`,
+      }   
+    })
+    isname(result.data.name)
+    ispicture(result.data.profilePic)
+    console.log(result)
+  }catch(e){
+    console.log(e)
+  }
+  }
+ 
+    useEffect(() => {
+    // ตรวจสอบการเปลี่ยนแปลงของ location และอัปเดต category
+    if (location.state?.category) {
+      iscategory(location.state.category);
+    }
+  }, [location]);
+
+  useEffect(()=>{
+    const token = localStorage.getItem("token");
+    if (!token) {
+      // ถ้าไม่มี token ให้ไปหน้า login
+      navigate("/login");
+    } else {
+      // มี token ให้เรียกฟังก์ชัน fetchdata
+      fetchdata();
+    }
+  },[navigate])
 
   let render = null
   switch (category ) {
@@ -36,7 +76,7 @@ function Profilepage() {
           <div className="mt-[100px] w-[800px] mx-auto">
             <div className="flex flex-row items-center gap-[10px]">
               <img
-                src={image}
+                src={picture}
                 alt="logo"
                 className="w-10 h-10 rounded-full object-cover"
               />

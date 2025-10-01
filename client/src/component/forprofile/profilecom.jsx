@@ -1,17 +1,50 @@
-import { useState } from "react";
-
+import { useState, useEffect } from "react";
+import axios from "axios";
 function ProfileCom() {
   const [names, setNames] = useState("");
   const [usernames, setUsernames] = useState("");
   const [emails, setEmails] = useState("");
+  const [profilePic, setProfilePic] = useState("");
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const fetchData = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        // ถ้าไม่มี token ให้ไปหน้า login
+        return;
+      }
 
+      try {
+        const response = await axios.get("http://localhost:4001/auth/get-user", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-  const image = "/herosection.png";
+        const { name, username, email, profilePic } = response.data;
+        setNames(name);
+        setUsernames(username);
+        setEmails(email);
+        setProfilePic(profilePic);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="bg-gray-400 rounded-2xl p-[40px] flex flex-col gap-[40px]">
       <div className="flex flex-row  justify-center items-center gap-[28px]">
         <img
-          src={image}
+          src={profilePic|| "/hh..png"}
           alt="profile-logo"
           className="w-[160px] h-[160px] object-cover rounded-full"
         />
