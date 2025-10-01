@@ -221,14 +221,14 @@ authRouter.post("/upload-profile-pic", protectUser, upload.single("profilePic"),
       return res.status(500).json({ error: "Failed to retrieve public URL" });
     }
 
-    console.log("📸 Uploaded Image URL:", publicURL);
+    
 
     // ✅ Update DB
     const query = `UPDATE users SET profile_pic = $1 WHERE id = $2 RETURNING *`;
     const values = [publicURL, userId];
     const { rows } = await connectionPool.query(query, values);
 
-    console.log("📦 Updated User Row:", rows);
+    
 
     res.status(200).json({
       message: "Profile picture updated",
@@ -269,6 +269,61 @@ authRouter.put("/update-profile", protectUser, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+authRouter.post("/admin/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    // 1. Sign in ผ่าน Supabase Auth
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      if (
+        error.code === "invalid_credentials" ||
+        error.message.includes("Invalid login credentials")
+      ) {
+        return res.status(400).json({
+          error: "Your password is incorrect or this email doesn't exist",
+        });
+      }
+      return res.status(402).json({ error: error.message });
+    }
+
+    const user = data.user;
+    const accessToken = data.session.access_token;
+
+    // 2. Query role จาก PostgreSQL DB ผ่าน pool
+    const result = await connectionPool.query(
+      "SELECT role FROM users WHERE id = $1",
+      [user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(403).json({ error: "User role not found" });
+    }
+
+    const isAdmin = result.rows[0].role === "admin";
+
+    if (!isAdmin) {
+      return res.status(403).json({ error: "Access denied: Not an admin" });
+    }
+
+    // 3. ส่ง response กลับ
+    return res.status(200).json({
+      message: "Signed in successfully",
+      access_token: accessToken,
+      is_admin: isAdmin,
+      user_id: user.id,
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    return res.status(500).json({ error: "An error occurred during login" });
   }
 });
 

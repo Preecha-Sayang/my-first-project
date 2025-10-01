@@ -7,7 +7,6 @@ const postRouter = Router();
 
 postRouter.post("/", validatePostData, protectUser, async (req, res) => {
   // ลอจิกในการเก็บข้อมูลของโพสต์ลงในฐานข้อมูล
-  console.log("Body:", req.body);
   // 1) Access ข้อมูลใน Body จาก Request ด้วย req.body
   const newPost = req.body;
 
@@ -141,6 +140,63 @@ postRouter.get("/", async (req, res) => {
     });
   }
 });
+
+postRouter.get("/all", async (req, res) => {
+  try {
+    const { keyword = "", category = "", status = "" } = req.query;
+
+    let query = `
+      SELECT posts.id, posts.image, categories.name AS category, posts.title, posts.description, posts.date, posts.content, statuses.status, posts.likes_count
+      FROM posts
+      INNER JOIN categories ON posts.category_id = categories.id
+      INNER JOIN statuses ON posts.status_id = statuses.id
+    `;
+
+    const conditions = [];
+    const values = [];
+
+    if (category) {
+      values.push(`%${category}%`);
+      conditions.push(`categories.name ILIKE $${values.length}`);
+    }
+
+    if (status) {
+      values.push(`%${status}%`);
+      conditions.push(`statuses.status ILIKE $${values.length}`);
+    }
+
+    if (keyword) {
+      values.push(`%${keyword}%`);
+      values.push(`%${keyword}%`);
+      values.push(`%${keyword}%`);
+      conditions.push(`(
+        posts.title ILIKE $${values.length - 2}
+        OR posts.description ILIKE $${values.length - 1}
+        OR posts.content ILIKE $${values.length}
+      )`);
+    }
+
+    if (conditions.length > 0) {
+      query += " WHERE " + conditions.join(" AND ");
+    }
+
+    query += " ORDER BY posts.date DESC";
+
+    // Execute query with parameterized values
+    const result = await connectionPool.query(query, values);
+
+    return res.status(200).json({
+      posts: result.rows,
+      totalPosts: result.rows.length
+    });
+  } catch (error) {
+    console.error("Error fetching posts:", error);
+    return res.status(500).json({
+      message: "Server error while fetching posts"
+    });
+  }
+});
+
 
 postRouter.get("/:postId", async (req, res) => {
   // ลอจิกในอ่านข้อมูลโพสต์ด้วย Id ในระบบ
@@ -368,6 +424,7 @@ postRouter.post("/:postId/like", protectUser,async (req, res) => {
     return res.status(500).json({ message: "Database error" });
   }
 });
+
 
 
 export default postRouter;
