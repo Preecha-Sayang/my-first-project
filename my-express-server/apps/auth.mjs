@@ -2,6 +2,7 @@ import { Router } from "express";
 import { createClient } from "@supabase/supabase-js";
 import connectionPool from "../utils/db.mjs";
 import multer from "multer";
+import protectAdmin from "../middleware/protectAdmin.mjs";
 import protectUser from "../middleware/protectUser.mjs";
 
 const supabase = createClient(
@@ -324,6 +325,59 @@ authRouter.post("/admin/login", async (req, res) => {
   } catch (error) {
     console.error("Login error:", error);
     return res.status(500).json({ error: "An error occurred during login" });
+  }
+});
+
+authRouter.post("/upload-image", protectAdmin, upload.single("postImage"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    const userId = req.user.id;
+    const { postId } = req.body; // ✅ ต้องมี postId ส่งมาด้วย
+    if (!postId) {
+      return res.status(400).json({ error: "postId is required" });
+    }
+
+    const fileBuffer = req.file.buffer;
+    const fileName = `post-images/${userId}-${Date.now()}.png`;
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from("my-personal0blog")
+      .upload(fileName, fileBuffer, {
+        contentType: req.file.mimetype,
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error("Upload Error:", uploadError.message);
+      return res.status(500).json({ error: uploadError.message });
+    }
+
+    const { data: urlData } = supabase.storage
+      .from("my-personal0blog")
+      .getPublicUrl(fileName);
+
+    const publicURL = urlData?.publicUrl;
+
+    if (!publicURL) {
+      return res.status(500).json({ error: "Failed to retrieve public URL" });
+    }
+
+    const query = `UPDATE posts SET image = $1 WHERE id = $2 RETURNING *`;
+    const values = [publicURL, postId];
+    const { rows } = await connectionPool.query(query, values);
+
+    res.status(200).json({
+      message: "Image uploaded successfully",
+      imageUrl: publicURL,
+      post: rows[0],
+    });
+
+  } catch (error) {
+    console.error("❌ Upload failed:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 

@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Search, Edit2, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { Search, Edit2, Trash2 } from "lucide-react";
 
-export default function ArticleManagement() {
+export default function ArticleManagement({ setIsCreatingArticle }) {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [categories, setCategories] = useState([]);
   // ✅ ฟังก์ชันแก้ searchTerm
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -23,47 +23,70 @@ export default function ArticleManagement() {
       if (selectedCategory) params.category = selectedCategory;
       if (selectedStatus) params.status = selectedStatus;
 
-      const response = await axios.get('http://localhost:4001/posts/all', { params });
+      const response = await axios.get("http://localhost:4001/posts/all", {
+        params,
+      });
 
       const posts = response.data.posts || [];
       setArticles(posts);
     } catch (error) {
-      console.error('Error fetching articles:', error);
+      console.error("Error fetching articles:", error);
       setArticles([]);
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get("http://localhost:4001/posts/category"); // URL API category ของคุณ
+      const data = response.data.categories || [];
+      setCategories(data);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
   useEffect(() => {
     fetchArticles();
   }, [searchTerm, selectedStatus, selectedCategory]);
 
   const handleDelete = async (postId) => {
-    if (!confirm('Are you sure you want to delete this article?')) return;
+    if (!confirm("Are you sure you want to delete this article?")) return;
 
     try {
       await axios.delete(`/posts/${postId}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
-      alert('Article deleted successfully');
+      alert("Article deleted successfully");
       fetchArticles();
     } catch (error) {
-      console.error('Error deleting article:', error);
-      alert('Failed to delete article');
+      console.error("Error deleting article:", error);
+      alert("Failed to delete article");
     }
   };
 
   const handleEdit = (postId) => {
     // ✅ แนะนำให้เพิ่ม navigate ไปยังหน้าแก้ไข (ถ้ามี)
     // เช่น: navigate(`/dashboard/edit-post/${postId}`);
-    console.log('Edit clicked for post:', postId);
+    console.log("Edit clicked for post:", postId);
   };
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
+      <div className="p-6 border-b flex justify-between items-center">
+        <p className="text-xl font-semibold">Article management</p>
+        <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-all"
+         onClick={() => setIsCreatingArticle(true)}>
+          Create article
+        </button>
+      </div>
       <div className="max-w-7xl mx-auto">
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
@@ -100,9 +123,11 @@ export default function ArticleManagement() {
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
             >
               <option value="">All Categories</option>
-              <option value="Cat">Cat</option>
-              <option value="General">General</option>
-              <option value="Inspiration">Inspiration</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.name}>
+                  {cat.name}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -112,7 +137,9 @@ export default function ArticleManagement() {
           {loading ? (
             <div className="p-12 text-center text-gray-500">Loading...</div>
           ) : articles.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">No articles found</div>
+            <div className="p-12 text-center text-gray-500">
+              No articles found
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -134,14 +161,19 @@ export default function ArticleManagement() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {articles.map((article) => (
-                    <tr key={article.id} className="hover:bg-gray-50 transition-colors">
+                    <tr
+                      key={article.id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-900 max-w-md truncate">
                           {article.title}
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">{article.category}</div>
+                        <div className="text-sm text-gray-900">
+                          {article.category}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <span className="inline-flex items-center">

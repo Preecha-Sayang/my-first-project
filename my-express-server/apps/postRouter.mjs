@@ -2,37 +2,59 @@ import { Router } from "express";
 import validatePostData from "../middleware/postValidation.mjs";
 import connectionPool from "../utils/db.mjs";
 import protectUser from "../middleware/protectUser.mjs";
-
+import protectAdmin from "../middleware/protectAdmin.mjs";
 const postRouter = Router();
 
-postRouter.post("/", validatePostData, protectUser, async (req, res) => {
-  // ลอจิกในการเก็บข้อมูลของโพสต์ลงในฐานข้อมูล
-  // 1) Access ข้อมูลใน Body จาก Request ด้วย req.body
+postRouter.post("/", validatePostData,protectAdmin, async (req, res) => {
   const newPost = req.body;
+  const userId = req.user.id;
 
-  // 2) เขียน Query เพื่อ Insert ข้อมูลโพสต์ ด้วย Connection Pool
+  // แปลง category_id กับ status_id ให้เป็น integer
+  const categoryId = parseInt(newPost.category_id, 10);
+  const statusId = parseInt(newPost.status_id, 10);
+
   try {
-    const query = `INSERT INTO posts (title, image, category_id, description, content, status_id)
-      values ($1, $2, $3, $4, $5, $6)`;
+    const query = `
+      INSERT INTO posts (
+        user_id, 
+        image, 
+        category_id, 
+        title, 
+        description, 
+        content, 
+        status_id,
+        date,
+        likes_count
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, 0)
+      RETURNING *
+    `;
 
     const values = [
-      newPost.title,
+      userId,
       newPost.image,
-      newPost.category_id,
+      categoryId,
+      newPost.title,
       newPost.description,
       newPost.content,
-      newPost.status_id,
+      statusId,
     ];
 
-    await connectionPool.query(query, values);
-  } catch {
+    const result = await connectionPool.query(query, values);
+    const createdPost = result.rows[0];
+
+    return res.status(201).json({
+      message: "Created post successfully",
+      data: createdPost
+    });
+
+  } catch (error) {
+    console.error("Error creating post:", error);
     return res.status(500).json({
-      message: `Server could not create post because database connection`,
+      message: "Server could not create post because database connection",
+      error: error.message
     });
   }
-
-  // 3) Return ตัว Response กลับไปหา Client ว่าสร้างสำเร็จ
-  return res.status(201).json({ message: "Created post successfully" });
 });
 
 postRouter.get("/", async (req, res) => {
@@ -187,16 +209,25 @@ postRouter.get("/all", async (req, res) => {
 
     return res.status(200).json({
       posts: result.rows,
-      totalPosts: result.rows.length
+      totalPosts: result.rows.length,
     });
   } catch (error) {
     console.error("Error fetching posts:", error);
     return res.status(500).json({
-      message: "Server error while fetching posts"
+      message: "Server error while fetching posts",
     });
   }
 });
 
+postRouter.get("/category", async (req, res) => {
+  try {
+    const result = await connectionPool.query("SELECT * FROM categories");
+    res.json({ categories: result.rows });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 postRouter.get("/:postId", async (req, res) => {
   // ลอจิกในอ่านข้อมูลโพสต์ด้วย Id ในระบบ
@@ -205,7 +236,6 @@ postRouter.get("/:postId", async (req, res) => {
   const limit = 3; // จำนวน comment ที่จะแสดงต่อหน้า
   const page = parseInt(req.query.page) || 1;
   const offset = (page - 1) * limit;
-
 
   try {
     // 2) เขียน Query เพื่ออ่านข้อมูลโพสต์ ด้วย Connection Pool
@@ -248,7 +278,6 @@ postRouter.get("/:postId", async (req, res) => {
 
     const totalComments = parseInt(countResult.rows[0].count);
     const totalPages = Math.ceil(totalComments / limit);
-
 
     // แนบ comments เข้าใน post object
     post.comments = commentsQuery.rows;
@@ -320,7 +349,7 @@ postRouter.put("/:postId", validatePostData, protectUser, async (req, res) => {
   }
 });
 
-postRouter.delete("/:postId", protectUser, async (req, res) => {
+postRouter.delete("/:postId", protectAdmin, async (req, res) => {
   // ลอจิกในการลบข้อมูลโพสต์ด้วย Id ในระบบ
 
   // 1) Access ตัว Endpoint Parameter ด้วย req.params
@@ -355,7 +384,6 @@ postRouter.post("/:postId/comments", protectUser, async (req, res) => {
   const postId = req.params.postId;
   const userId = req.user.id; // ได้จาก protectUser
   const { comment } = req.body;
-  
 
   if (!comment || comment.trim() === "") {
     return res.status(400).json({ message: "Comment is required" });
@@ -378,8 +406,7 @@ postRouter.post("/:postId/comments", protectUser, async (req, res) => {
   }
 });
 
-
-postRouter.post("/:postId/like", protectUser,async (req, res) => {
+postRouter.post("/:postId/like", protectUser, async (req, res) => {
   const postId = req.params.postId;
   const userId = req.user.id;
 
@@ -424,7 +451,5 @@ postRouter.post("/:postId/like", protectUser,async (req, res) => {
     return res.status(500).json({ message: "Database error" });
   }
 });
-
-
 
 export default postRouter;
