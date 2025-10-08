@@ -133,6 +133,7 @@ authRouter.get("/get-user", async (req, res) => {
       name: rows[0].name,
       role: rows[0].role,
       profilePic: rows[0].profile_pic,
+      bio: rows[0].role,
     });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
@@ -242,15 +243,26 @@ authRouter.post("/upload-profile-pic", protectUser, upload.single("profilePic"),
 });
 
 authRouter.put("/update-profile", protectUser, async (req, res) => {
-  const userId = req.user.id; // ได้จาก middleware protectUser
-  const { name, username } = req.body;
+  const userId = req.user.id;
+  const { name, username, bio } = req.body;
 
   if (!name || !username) {
     return res.status(400).json({ error: "Name and username are required" });
   }
 
   try {
-    // ตรวจสอบว่ามี username ซ้ำกับคนอื่นหรือไม่ (ยกเว้นตัวเอง)
+    // ดึงข้อมูล user ปัจจุบัน
+    const currentUserQuery = `SELECT bio FROM users WHERE id = $1`;
+    const { rows: currentRows } = await connectionPool.query(currentUserQuery, [userId]);
+
+    if (currentRows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // ถ้า bio ไม่มีใน request ให้ใช้ค่าปัจจุบัน
+    const bioToUpdate = bio === undefined ? currentRows[0].bio : bio;
+
+    // ตรวจสอบ username ซ้ำ (ยกเว้นตัวเอง)
     const usernameCheckQuery = `
       SELECT * FROM users WHERE username = $1 AND id <> $2
     `;
@@ -260,11 +272,11 @@ authRouter.put("/update-profile", protectUser, async (req, res) => {
       return res.status(400).json({ error: "This username is already taken" });
     }
 
-    // อัปเดตข้อมูล user ในฐานข้อมูล
+    // อัพเดทข้อมูล
     const updateQuery = `
-      UPDATE users SET name = $1, username = $2 WHERE id = $3 RETURNING *
+      UPDATE users SET name = $1, username = $2, bio = $3 WHERE id = $4 RETURNING *
     `;
-    const { rows } = await connectionPool.query(updateQuery, [name, username, userId]);
+    const { rows } = await connectionPool.query(updateQuery, [name, username, bioToUpdate, userId]);
 
     res.status(200).json({ message: "Profile updated successfully", user: rows[0] });
   } catch (error) {
@@ -381,5 +393,30 @@ authRouter.post("/upload-image", protectAdmin, upload.single("postImage"), async
   }
 });
 
+
+authRouter.put("/update-email", protectUser, async (req, res) => {
+  const userId = req.user.id;
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: "Email is required" });
+  }
+
+  try {
+    // อัพเดท email ใน Supabase Auth
+    const { data, error } = await supabase.auth.updateUser({
+      email,
+    });
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.status(200).json({ message: "Email updated successfully", user: data.user });
+  } catch (error) {
+    console.error("Update email error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 export default authRouter;

@@ -1,62 +1,69 @@
-import { useState, useEffect, useRef } from "react";
-import { AwardIcon, Upload, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Upload, X } from "lucide-react";
 import axios from "axios";
 
-
-
-export default function CreateArticle() {
-
+export default function EditArticle({ postId }) {
+  const [thumbnailFile, setThumbnailFile] = useState(null);
   const [thumbnailUrl, setThumbnailUrl] = useState(null);
+
   const [title, setTitle] = useState("");
   const [introduction, setIntroduction] = useState("");
   const [content, setContent] = useState("");
   const [category, setCategory] = useState("");
-  const [authorName, setAuthorName] = useState("");
-  const [categories, isCategories] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [statusId, setStatusId] = useState(2); // default draft
 
   const fileInputRef = useRef(null);
 
-  const handleThumbnailUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  // ✅ โหลดข้อมูลบทความจาก postId
+  const fetchPost = async () => {
+    try {
+      const res = await axios.get(`http://localhost:4001/posts/${postId}`);
+      const post = res.data;
 
-
-
-    // Preview image
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setThumbnailUrl(reader.result);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const removeThumbnail = () => {
-
-    setThumbnailUrl(null); // <- ตัวนี้ถูก
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // clear the input
+      setTitle(post.title);
+      setIntroduction(post.description);
+      setContent(post.content);
+      setThumbnailUrl(post.image);
+      setCategory(post.category);
+      setStatusId(post.status === "publish" ? 1 : 2);
+    } catch (err) {
+      console.error("Error loading post:", err);
     }
   };
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get("http://localhost:4001/posts/category"); // URL API category ของคุณ
-      const data = response.data.categories || [];
-      isCategories(data);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
+      const res = await axios.get("http://localhost:4001/posts/category");
+      setCategories(res.data.categories || []);
+    } catch (err) {
+      console.error("Error loading categories:", err);
     }
+  };
+
+  const handleThumbnailUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setThumbnailFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setThumbnailUrl(reader.result);
+    reader.readAsDataURL(file);
+  };
+
+  const removeThumbnail = () => {
+    setThumbnailFile(null);
+    setThumbnailUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSubmit = async (status) => {
     try {
       const token = localStorage.getItem("token");
-      if (!token) {
-        alert("Please login first");
-        return;
-      }
+      if (!token) return alert("Please login first");
 
-      const selected = categories.find((cat) => cat.name === category);
+      const selected = categories.find((c) => c.name === category);
       const category_id = selected ? selected.id : null;
       const status_id = status === "draft" ? 1 : 2;
 
@@ -69,62 +76,30 @@ export default function CreateArticle() {
         status_id,
       };
 
-      console.log("Sending payload:", payload);
+      await axios.put(`http://localhost:4001/posts/${postId}`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      const response = await axios.post(
-        "http://localhost:4001/posts",
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      console.log("✅ Post created:", response.data);
-    } catch (error) {
-      console.error("❌ Error submitting post:", error);
-
-      if (error.response) {
-        console.error("Response data:", error.response.data);
-        console.error("Status:", error.response.status);
-        console.error("Headers:", error.response.headers);
-      }
+      alert("Article updated successfully");
+    } catch (err) {
+      console.error("Error updating article:", err);
+      alert("Update failed");
     }
   };
 
-  async function fetchname(){
-    const token = localStorage.getItem("token")
-    if (!token) {
-      console.log("No token found");
-      return;
-    }
 
-    try{
-      const result = await axios.get("http://localhost:4001/auth/get-user", {
-  headers: {
-    Authorization: `Bearer ${token}`,  // ส่ง token ในรูปแบบ Bearer token
-  },
-});
-      const data = result.data.name
-      console.log(data)
-      setAuthorName(data)
-    }catch(e){
-      console.log(e)
-    }
-  }
-    
- useEffect(() => {
-  fetchname()
-  fetchCategories(); // โหลด category ด้วยเหมือนเดิม
-}, []);
+
+
+
+  useEffect(() => {
+    fetchCategories();
+    fetchPost();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="p-6 border-b flex justify-between items-center">
-        <p className="text-xl font-semibold">
-          Create article
-        </p>
+        <p className="text-xl font-semibold">Edit Article</p>
         <div className="flex flex-row gap-1">
           <button
             className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-all"
@@ -140,8 +115,9 @@ export default function CreateArticle() {
           </button>
         </div>
       </div>
-      <div className=" mx-20px bg-white rounded-lg shadow-sm p-6">
-        {/* Thumbnail Upload */}
+
+      <div className="mx-20 bg-white rounded-lg shadow-sm p-6">
+        {/* Thumbnail */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Thumbnail Image
@@ -149,14 +125,10 @@ export default function CreateArticle() {
           <div className="flex flex-row items-end gap-[50px]">
             <div className="relative">
               {!thumbnailUrl ? (
-                <div
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-8 bg-gray-50 w-[450px] h-[250px]
-                flex justify-center items-center"
-                >
-                  {/* ไม่ให้ผู้ใช้กดอัพโหลดจากตรงนี้ */}
-                  <div className="flex flex-col items-center justify-center pointer-events-none select-none">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 bg-gray-50 w-[450px] h-[250px] flex justify-center items-center">
+                  <div className="flex flex-col items-center justify-center pointer-events-none">
                     <Upload className="w-12 h-12 text-gray-400 mb-2" />
-                    <span className="text-sm text-gray-500 mb-4 text-center">
+                    <span className="text-sm text-gray-500 text-center">
                       Upload thumbnail image
                     </span>
                   </div>
@@ -185,7 +157,6 @@ export default function CreateArticle() {
                 onChange={handleThumbnailUpload}
                 className="hidden"
               />
-
               <button
                 type="button"
                 className="mt-2 px-4 py-2 bg-white border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
@@ -207,12 +178,9 @@ export default function CreateArticle() {
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-[450px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500
-            "
+            className="w-[450px] px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
           >
-            <option value="" disabled>
-              Select category
-            </option>
+            <option value="">Select category</option>
             {categories.map((cat) => (
               <option key={cat.id} value={cat.name}>
                 {cat.name}
@@ -221,50 +189,31 @@ export default function CreateArticle() {
           </select>
         </div>
 
-        {/* Author Name */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Author name
-          </label>
-          <input
-            type="text"
-            value={authorName}
-            onChange={(e) => setAuthorName(e.target.value)}
-            placeholder="Thanaphon R."
-            className="w-[450px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled
-          />
-        </div>
-
         {/* Title */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Title
           </label>
           <input
-            type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Article title"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         {/* Introduction */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Introduction (max 120 letters)
+            Introduction (max 120)
           </label>
           <textarea
             value={introduction}
             onChange={(e) => {
-              if (e.target.value.length <= 120) {
-                setIntroduction(e.target.value);
-              }
+              if (e.target.value.length <= 120) setIntroduction(e.target.value);
             }}
-            placeholder="Introduction"
             rows="3"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 resize-none"
           />
           <div className="text-xs text-gray-500 mt-1 text-right">
             {introduction.length}/120
@@ -279,9 +228,8 @@ export default function CreateArticle() {
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Content"
-            rows="12"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            rows="10"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 resize-none"
           />
         </div>
       </div>

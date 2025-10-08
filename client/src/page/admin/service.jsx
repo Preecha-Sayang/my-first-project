@@ -1,7 +1,10 @@
 import { useState } from "react";
 import ArticleManagement from "./service/article";
 import CreateArticle from "./service/createarticle";
-
+import EditArticle from "./service/EditArticle";
+import CategoriesManage from "./service/category";
+import CreateCatrgory from "./service/categorycreate";
+import ProfileAdmin from "./service/profileadmin";
 
 const menuitem = [
   { label: "Article management", img: "/contain/notebook_light.svg" },
@@ -11,24 +14,32 @@ const menuitem = [
   { label: "Reset password", img: "/contain/Bell_light.svg" },
 ];
 
-
-
 function AdminService() {
   const [category, setCategory] = useState("Article management");
-    const [isCreatingArticle, setIsCreatingArticle] = useState(false); 
-
+  const [isCreatingArticle, setIsCreatingArticle] = useState(false);
+  const [editingPostId, setEditingPostId] = useState(false);
+  const [Category, setisCategories] = useState(false);
   const renderContent = () => {
     if (isCreatingArticle) {
-      return <CreateArticle />;
+      return <CreateArticle onCancel={() => setIsCreatingArticle(false)} />;
+    }
+
+    if (editingPostId) {
+      return (<EditArticle postId={editingPostId} onCancel={() => setEditingPostId(false)}/>
+      );
+    }
+
+    if (Category) {
+      return <CreateCatrgory onCancel={() => setisCategories(false)} />;
     }
 
     switch (category) {
       case "Article management":
-        return <ArticleManagement setIsCreatingArticle={setIsCreatingArticle} />;
+        return <ArticleManagement setIsCreatingArticle={setIsCreatingArticle} setEditingPostId={setEditingPostId}/>
       case "Category management":
-        return <p>hi</p>;
+        return <CategoriesManage setisCategories={setisCategories} />;
       case "Profile":
-        return <p>hi1</p>;
+        return <ProfileAdmin/>;
       case "Notification":
         return <p>hi1</p>;
       case "Reset password":
@@ -38,8 +49,6 @@ function AdminService() {
     }
   };
 
-
-
   return (
     <div className="flex flex-row">
       {/* Sidebar */}
@@ -47,8 +56,8 @@ function AdminService() {
         {/* Logo Section */}
         <div>
           <div className="h-[200px] flex flex-col justify-center items-center p-5 gap-4">
-            <img src="/hh..png" alt="logo"  />
-            <img src="/contain/Text.svg" alt="admin_panel"  />
+            <img src="/hh..png" alt="logo" />
+            <img src="/contain/Text.svg" alt="admin_panel" />
           </div>
 
           {/* Menu Items */}
@@ -61,9 +70,15 @@ function AdminService() {
                   onClick={() => {
                     setCategory(item.label);
                     setIsCreatingArticle(false); // ✅ กลับจากหน้า create
+                    setEditingPostId(false);
+                    setisCategories(false)
                   }}
                   className={`flex items-center gap-3 px-4 py-3 rounded-md cursor-pointer transition-all 
-                    ${isActive ? "bg-amber-300 font-semibold" : "hover:bg-amber-300"}`}
+                    ${
+                      isActive
+                        ? "bg-amber-300 font-semibold"
+                        : "hover:bg-amber-300"
+                    }`}
                 >
                   <img src={item.img} alt={item.label} className="w-6 h-6" />
                   <p className="text-sm text-gray-800">{item.label}</p>
@@ -76,7 +91,11 @@ function AdminService() {
         {/* Footer Section */}
         <div className="px-4 py-4">
           <div className="flex items-center gap-3 mb-3 cursor-pointer hover:opacity-80">
-            <img src="/contain/Out_light.svg" alt="Out_light" className="w-5 h-5" />
+            <img
+              src="/contain/Out_light.svg"
+              alt="Out_light"
+              className="w-5 h-5"
+            />
             <p className="text-sm font-medium text-gray-800">hh. website</p>
           </div>
           <div className="border-b border-gray-400 mb-3"></div>
@@ -88,10 +107,7 @@ function AdminService() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {renderContent()}
-        </div>
-      
+      <div className="flex-1 flex flex-col">{renderContent()}</div>
     </div>
   );
 }

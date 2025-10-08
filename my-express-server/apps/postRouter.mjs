@@ -12,6 +12,7 @@ postRouter.post("/", validatePostData,protectAdmin, async (req, res) => {
   // แปลง category_id กับ status_id ให้เป็น integer
   const categoryId = parseInt(newPost.category_id, 10);
   const statusId = parseInt(newPost.status_id, 10);
+  
 
   try {
     const query = `
@@ -449,6 +450,68 @@ postRouter.post("/:postId/like", protectUser, async (req, res) => {
   } catch (err) {
     console.error("Error toggling like:", err);
     return res.status(500).json({ message: "Database error" });
+  }
+});
+
+
+postRouter.delete("/:categoryid/category", protectAdmin, async (req, res) => {
+  // ลอจิกในการลบข้อมูลโพสต์ด้วย Id ในระบบ
+
+  // 1) Access ตัว Endpoint Parameter ด้วย req.params
+  const categoryFromClient = req.params.categoryid;
+
+  try {
+    // 2) เขียน Query เพื่อลบข้อมูลโพสต์ ด้วย Connection Pool
+    const result = await connectionPool.query(
+      `DELETE FROM categories
+         WHERE id = $1`,
+      [categoryFromClient]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        message: `Server could not find a requested category to delete (category id: ${categoryFromClient})`,
+      });
+    }
+
+    // 3) Return ตัว Response กลับไปหา Client
+    return res.status(200).json({
+      message: "Deleted category successfully",
+    });
+  } catch {
+    return res.status(500).json({
+      message: `Server could not delete post because database connection`,
+    });
+  }
+});
+
+postRouter.post("/category", protectAdmin, async (req, res) => {
+  const categoryName = req.body.name;
+
+  console.log("Category Name:", categoryName);
+
+  try {
+    const query = `
+      INSERT INTO categories (name)
+      VALUES ($1)
+      RETURNING *
+    `;
+
+    const values = [categoryName];
+
+    const result = await connectionPool.query(query, values);
+    const createdCategory = result.rows[0];
+
+    return res.status(201).json({
+      message: "Created category successfully",
+      data: createdCategory,
+    });
+  } catch (error) {
+    console.error("Error creating category:", error);
+    return res.status(500).json({
+      message: "Server could not create category because database connection",
+      error: error.message,
+    });
   }
 });
 

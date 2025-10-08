@@ -116,9 +116,9 @@ function NavBar() {
               onClick={() => setdropdown(!dorpdown)}
             >
               <img
-                src={image || "/hh..png"}
+                src={image || "/default-profile.jpg"}
                 alt="image-profile"
-                className="w-10 h-10 rounded-full object-cover"
+                className="w-10 h-10 rounded-full object-cover border"
               />
               <p className="text-sm">{name}</p>
               <ChevronDown

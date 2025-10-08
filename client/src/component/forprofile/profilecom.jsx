@@ -9,7 +9,6 @@ function ProfileCom() {
 
   const [selectedFile, setSelectedFile] = useState(null); // เก็บไฟล์ที่เลือก
   const [previewUrl, setPreviewUrl] = useState(null); // ลิงก์ preview รูปที่เลือก
-  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -103,9 +102,9 @@ function ProfileCom() {
     <div className="bg-gray-400 rounded-2xl p-[40px] flex flex-col gap-[40px]">
       <div className="flex flex-row  justify-center items-center gap-[28px]">
         <img
-          src={previewUrl || profilePic || "/hh..png"}
+          src={previewUrl || profilePic || "/default-profile.jpg"}
           alt="profile-logo"
-          className="w-[160px] h-[160px] object-cover rounded-full"
+          className="w-[160px] h-[160px] object-cover rounded-full border"
         />
         <div className="flex flex-col gap-2">
           {/* ซ่อน input ไว้ แต่กดปุ่มเปิด dialog แทน */}

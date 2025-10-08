@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Search, Edit2, Trash2 } from "lucide-react";
 
-export default function ArticleManagement({ setIsCreatingArticle }) {
+
+export default function ArticleManagement({ setIsCreatingArticle, setEditingPostId }) {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -59,7 +60,7 @@ export default function ArticleManagement({ setIsCreatingArticle }) {
     if (!confirm("Are you sure you want to delete this article?")) return;
 
     try {
-      await axios.delete(`/posts/${postId}`, {
+      await axios.delete(`http://localhost:4001/posts/${postId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -72,11 +73,9 @@ export default function ArticleManagement({ setIsCreatingArticle }) {
     }
   };
 
-  const handleEdit = (postId) => {
-    // ✅ แนะนำให้เพิ่ม navigate ไปยังหน้าแก้ไข (ถ้ามี)
-    // เช่น: navigate(`/dashboard/edit-post/${postId}`);
-    console.log("Edit clicked for post:", postId);
-  };
+const handleEdit = (postId) => {
+  setEditingPostId(postId);
+};
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">

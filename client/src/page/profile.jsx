@@ -75,9 +75,9 @@ function Profilepage() {
           <div className="mt-[100px] w-[800px] mx-auto">
             <div className="flex flex-row items-center gap-[10px]">
               <img
-                src={picture|| "/hh..png"}
+                src={picture|| "/default-profile.jpg"}
                 alt="logo"
-                className="w-10 h-10 rounded-full object-cover"
+                className="w-10 h-10 rounded-full object-cover border"
               />
               <p>
                 {name} | <span> {category}</span>
