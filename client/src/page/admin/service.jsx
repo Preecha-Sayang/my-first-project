@@ -5,6 +5,8 @@ import EditArticle from "./service/EditArticle";
 import CategoriesManage from "./service/category";
 import CreateCatrgory from "./service/categorycreate";
 import ProfileAdmin from "./service/profileadmin";
+import ResetPassword from "@/component/forprofile/forgetpassword";
+import AdminResetPassword from "./service/adminresetpassword";
 
 const menuitem = [
   { label: "Article management", img: "/contain/notebook_light.svg" },
@@ -43,7 +45,7 @@ function AdminService() {
       case "Notification":
         return <p>hi1</p>;
       case "Reset password":
-        return <p>hi3</p>;
+        return <AdminResetPassword/>;
       default:
         return <p>ไม่มีหน้าที่ต้องการ</p>;
     }
