@@ -133,7 +133,7 @@ authRouter.get("/get-user", async (req, res) => {
       name: rows[0].name,
       role: rows[0].role,
       profilePic: rows[0].profile_pic,
-      bio: rows[0].role,
+      bio: rows[0].bio,
     });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
@@ -394,28 +394,37 @@ authRouter.post("/upload-image", protectAdmin, upload.single("postImage"), async
 });
 
 
-authRouter.put("/update-email", protectUser, async (req, res) => {
-  const userId = req.user.id;
+authRouter.put("/update-email", protectAdmin, async (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
   const { email } = req.body;
 
-  if (!email) {
-    return res.status(400).json({ error: "Email is required" });
-  }
+  if (!token) return res.status(401).json({ error: "Token missing" });
+  if (!email) return res.status(400).json({ error: "Email is required" });
 
   try {
-    // อัพเดท email ใน Supabase Auth
-    const { data, error } = await supabase.auth.updateUser({
+    const supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY // ✅ สำคัญ
+    );
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !user) {
+      return res.status(401).json({ error: "Invalid user token" });
+    }
+
+    const { data, error } = await supabase.auth.admin.updateUserById(user.id, {
       email,
     });
 
-    if (error) {
-      return res.status(400).json({ error: error.message });
-    }
+    if (error) return res.status(400).json({ error: error.message });
 
-    res.status(200).json({ message: "Email updated successfully", user: data.user });
-  } catch (error) {
-    console.error("Update email error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(200).json({
+      message: "Email updated successfully",
+      user: data.user,
+    });
+  } catch (err) {
+    console.error("Update email error:", err);
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 

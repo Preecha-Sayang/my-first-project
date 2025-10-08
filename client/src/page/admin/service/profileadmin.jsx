@@ -6,10 +6,11 @@ function ProfileAdmin() {
   const [profilePic, setProfilePic] = useState("");
   const [selectedFile, setSelectedFile] = useState(null); // เก็บไฟล์ที่เลือก
   const [introbio, setIntrobio] = useState("");
-  const [introname, setIntroname]=useState("")
-  const [introusername, setIntrousername] =useState("")
-  const [introemail, setIntroemail]= useState("")
-   const [loading, setLoading] = useState(false);
+  const [introname, setIntroname] = useState("");
+  const [introusername, setIntrousername] = useState("");
+  const [introemail, setIntroemail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [originalEmail, setOriginalEmail] = useState("");
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -18,20 +19,19 @@ function ProfileAdmin() {
     setPreviewUrl(URL.createObjectURL(file)); // สร้าง preview URL
   };
 
-
-
   useEffect(() => {
     async function fetchUser() {
       try {
         const res = await axios.get("http://localhost:4001/auth/get-user", {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
-        
+
         const user = res.data;
-        console.log("User data:",user); 
+        console.log("User data:", user);
         setIntroname(user.name);
         setIntrousername(user.username);
         setIntroemail(user.email);
+        setOriginalEmail(user.email);
         setIntrobio(user.bio || "");
         setProfilePic(user.profilePic || "");
       } catch (error) {
@@ -40,8 +40,6 @@ function ProfileAdmin() {
     }
     fetchUser();
   }, []);
-
-
 
   const handleSave = async () => {
     setLoading(true);
@@ -54,43 +52,62 @@ function ProfileAdmin() {
         const formData = new FormData();
         formData.append("profilePic", selectedFile);
 
-        const uploadRes = await axios.post("http://localhost:4001/auth/upload-profile-pic", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+        const uploadRes = await axios.post(
+          "http://localhost:4001/auth/upload-profile-pic",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
 
         profilePicUrl = uploadRes.data.profilePicUrl;
         setProfilePic(profilePicUrl);
+      }
+      console.log("Sending token:", localStorage.getItem("token"));
+      // ถ้า email เปลี่ยน ให้เรียกอัพเดท email ก่อน
+      if (introemail !== originalEmail) {
+        await axios.put(
+          "http://localhost:4001/auth/update-email",
+          { email: introemail },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        setOriginalEmail(introemail); // อัพเดท email เก่าใน state ด้วย
       }
 
       // อัพเดทข้อมูลโปรไฟล์
       const updateData = {
         name: introname,
         username: introusername,
-        email: introemail,  // ถ้าต้องส่ง email ด้วย
+        email: introemail, // ถ้าต้องส่ง email ด้วย
         bio: introbio,
         profilePic: profilePicUrl, // ส่ง URL รูปโปรไฟล์ (ถ้า backend รองรับ)
       };
 
-      const updateRes = await axios.put("http://localhost:4001/auth/update-profile", updateData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const updateRes = await axios.put(
+        "http://localhost:4001/auth/update-profile",
+        updateData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
       alert("Profile updated successfully!");
     } catch (error) {
-      console.error(error);
-      alert("Failed to update profile");
+      console.error(error.response?.data);
+  alert(error.response?.data?.error || "Failed to update email");
     } finally {
       setLoading(false);
     }
   };
-
-
-
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -145,10 +162,9 @@ function ProfileAdmin() {
             <input
               id="adminname"
               type="text"
-              
               className="w-[480px] h-[50px] bg-white border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
               value={introname}
-              onChange={(e)=> setIntroname(e.target.value)}
+              onChange={(e) => setIntroname(e.target.value)}
             />
           </div>
 
@@ -161,7 +177,7 @@ function ProfileAdmin() {
               type="text"
               className="w-[480px] h-[50px] bg-white border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
               value={introusername}
-              onChange={(e)=> setIntrousername(e.target.value)}
+              onChange={(e) => setIntrousername(e.target.value)}
             />
           </div>
 
@@ -174,7 +190,7 @@ function ProfileAdmin() {
               type="text"
               className="w-[480px] h-[50px] bg-white border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
               value={introemail}
-              onChange={(e)=> setIntroemail(e.target.value)}
+              onChange={(e) => setIntroemail(e.target.value)}
             />
           </div>
 
