@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 
+
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
+
 function ProfileAdmin() {
   const [previewUrl, setPreviewUrl] = useState(null); // ลิงก์ preview รูปที่เลือก
   const [profilePic, setProfilePic] = useState("");
@@ -22,7 +26,7 @@ function ProfileAdmin() {
   useEffect(() => {
     async function fetchUser() {
       try {
-        const res = await axios.get("http://localhost:4001/auth/get-user", {
+        const res = await axios.get(`${API_URL}/auth/get-user`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
 
@@ -53,7 +57,7 @@ function ProfileAdmin() {
         formData.append("profilePic", selectedFile);
 
         const uploadRes = await axios.post(
-          "http://localhost:4001/auth/upload-profile-pic",
+          `${API_URL}/auth/upload-profile-pic`,
           formData,
           {
             headers: {
@@ -70,7 +74,7 @@ function ProfileAdmin() {
       // ถ้า email เปลี่ยน ให้เรียกอัพเดท email ก่อน
       if (introemail !== originalEmail) {
         await axios.put(
-          "http://localhost:4001/auth/update-email",
+          `${API_URL}/auth/update-email`,
           { email: introemail },
           {
             headers: {
@@ -91,7 +95,7 @@ function ProfileAdmin() {
       };
 
       const updateRes = await axios.put(
-        "http://localhost:4001/auth/update-profile",
+        `${API_URL}/auth/update-profile`,
         updateData,
         {
           headers: {

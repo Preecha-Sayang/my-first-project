@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { toast } from "sonner";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
 
 export default function ViewPost() {
   const { postId } = useParams();
@@ -32,7 +33,7 @@ export default function ViewPost() {
   async function fetchdata(pageNumber = 1, append = false) {
     try {
       const result = await axios.get(
-        `http://localhost:4001/posts/${postId}?page=${pageNumber}`
+        `${API_URL}/posts/${postId}?page=${pageNumber}`
       );
       setPost(result.data);
       setError(null);
@@ -75,7 +76,7 @@ export default function ViewPost() {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.post(
-        `http://localhost:4001/posts/${postId}/like`,
+        `${API_URL}/posts/${postId}/like`,
         {},
         {
           headers: {
@@ -106,7 +107,7 @@ export default function ViewPost() {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.post(
-        `http://localhost:4001/posts/${postId}/comments`,
+        `${API_URL}/posts/${postId}/comments`,
         { comment: commentText },
         {
           headers: {

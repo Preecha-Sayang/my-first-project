@@ -1,6 +1,10 @@
 import { useState } from "react";
 import axios from "axios";
 
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
+
+
 function AdminResetPassword() {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -28,7 +32,7 @@ function AdminResetPassword() {
     try {
       setLoading(true);
       const response = await axios.put(
-        "http://localhost:4001/auth/reset-password",
+        `${API_URL}/auth/reset-password`,
         {
           oldPassword,
           newPassword,

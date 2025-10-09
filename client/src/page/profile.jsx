@@ -6,7 +6,7 @@ import ResetPassword from "@/component/forprofile/forgetpassword";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 
-
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
 function Profilepage() {
   const location = useLocation();
   const initialCategory = location.state?.category || "Profile";
@@ -20,7 +20,7 @@ function Profilepage() {
   async function fetchdata(){
     const token = localStorage.getItem("token");
   try{
-    const result = await axios.get("http://localhost:4001/auth/get-user",{
+    const result = await axios.get(`${API_URL}/auth/get-user`,{
       header:{
         Authorization: `Bearer ${token}`,
       }   

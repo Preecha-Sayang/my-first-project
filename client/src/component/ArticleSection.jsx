@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 
-
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
 
 function BlogCard({ category, keyword }) {
   const [data, setData] = useState([]);
@@ -29,7 +29,7 @@ function BlogCard({ category, keyword }) {
        setIsLoading(true);
       try {
         const categoryParam = category === "Highlight" ? "" : category;
-        const result = await axios.get("http://localhost:4001/posts", {
+        const result = await axios.get(`${API_URL}/posts`, {
             params: {
               page: page,
               limit: 6,

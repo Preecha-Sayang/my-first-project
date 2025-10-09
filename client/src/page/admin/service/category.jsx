@@ -3,11 +3,15 @@ import  { useState, useEffect } from "react";
 import axios from "axios";
 import { Search, Edit2, Trash2 } from "lucide-react";
 
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
+
+
 function CategoriesManage({setisCategories}) {
     const [categories, setCategories] = useState([]);
 const fetchCategories = async () => {
     try {
-      const response = await axios.get("http://localhost:4001/posts/category"); // URL API category ของคุณ
+      const response = await axios.get(`${API_URL}/posts/category`); // URL API category ของคุณ
       const data = response.data.categories || [];
       setCategories(data);
     } catch (error) {
@@ -23,7 +27,7 @@ const handleDelete = async (categoryid) => {
     if (!confirm("Are you sure you want to delete this article?")) return;
 
     try {
-      await axios.delete(`http://localhost:4001/posts/${categoryid}/category`, {
+      await axios.delete(`${API_URL}/posts/${categoryid}/category`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },

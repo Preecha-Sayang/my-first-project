@@ -3,6 +3,8 @@ import axios from "axios";
 import { Search, Edit2, Trash2 } from "lucide-react";
 
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
+
 export default function ArticleManagement({ setIsCreatingArticle, setEditingPostId }) {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -24,7 +26,7 @@ export default function ArticleManagement({ setIsCreatingArticle, setEditingPost
       if (selectedCategory) params.category = selectedCategory;
       if (selectedStatus) params.status = selectedStatus;
 
-      const response = await axios.get("http://localhost:4001/posts/all", {
+      const response = await axios.get(`${API_URL}/posts/all`, {
         params,
       });
 
@@ -40,7 +42,7 @@ export default function ArticleManagement({ setIsCreatingArticle, setEditingPost
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get("http://localhost:4001/posts/category"); // URL API category ของคุณ
+      const response = await axios.get(`${API_URL}/posts/category`); // URL API category ของคุณ
       const data = response.data.categories || [];
       setCategories(data);
     } catch (error) {
@@ -60,7 +62,7 @@ export default function ArticleManagement({ setIsCreatingArticle, setEditingPost
     if (!confirm("Are you sure you want to delete this article?")) return;
 
     try {
-      await axios.delete(`http://localhost:4001/posts/${postId}`, {
+      await axios.delete(`${API_URL}/posts/${postId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },

@@ -1,5 +1,7 @@
 import axios from "axios";
 import { useState } from "react";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
+
 function CreateCatrgory() {
   const [cat, iscat] = useState("");
 
@@ -16,7 +18,7 @@ function CreateCatrgory() {
     const payload = { name: cat };
     try {
       const result = await axios.post(
-        "http://localhost:4001/posts/category",
+        `${API_URL}/posts/category`,
         payload,
         {
           headers: {

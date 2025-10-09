@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/select";
 import axios from "axios";
 import { useState, useEffect } from "react";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
 
 function Search({ category, setCategory, keyword, setKeyword }) {
   const [isOpen, setIsOpen] = useState(true);
@@ -24,7 +25,7 @@ function Search({ category, setCategory, keyword, setKeyword }) {
 
     const handler = setTimeout(async () => {
       try {
-        const res = await axios.get("http://localhost:4001/posts", {
+        const res = await axios.get(`${API_URL}/posts`, {
           params: { keyword: inputValue, limit: 6 },
         });
         setSuggestions(res.data.posts);

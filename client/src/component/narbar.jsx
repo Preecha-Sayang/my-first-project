@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
 function NavBar() {
   const [isOpen, setIsOpen] = useState(false);
   const [login, setLogin] = useState(false);
@@ -29,7 +30,7 @@ function NavBar() {
 
   const fetchuser = async () => {
     try {
-      const res = await axios.get("http://localhost:4001/auth/get-user", {
+      const res = await axios.get(`${API_URL}/auth/get-user`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

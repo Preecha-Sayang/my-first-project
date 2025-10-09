@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
 function ProfileCom() {
   const [names, setNames] = useState("");
   const [usernames, setUsernames] = useState("");
@@ -20,7 +23,7 @@ function ProfileCom() {
 
       try {
         const response = await axios.get(
-          "http://localhost:4001/auth/get-user",
+          `${API_URL}/auth/get-user`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -64,7 +67,7 @@ function ProfileCom() {
         const formData = new FormData();
         formData.append("profilePic", selectedFile);
 
-        await axios.post("http://localhost:4001/auth/upload-profile-pic", formData, {
+        await axios.post(`${API_URL}/auth/upload-profile-pic`, formData, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
@@ -74,7 +77,7 @@ function ProfileCom() {
 
       // อัปเดตข้อมูล user เช่น name และ username (ถ้าคุณมี API อัปเดตข้อมูล user)
       await axios.put(
-        "http://localhost:4001/auth/update-profile", // สมมติ URL API อัปเดตข้อมูล
+        `${API_URL}/auth/update-profile`, // สมมติ URL API อัปเดตข้อมูล
         {
           name: names,
           username: usernames,

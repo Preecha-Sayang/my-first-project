@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -28,7 +29,7 @@ export default function AdminLoginPage() {
     if (!valid) return;
 
     try {
-      const res = await axios.post("http://localhost:4001/auth/login", {
+      const res = await axios.post(`${API_URL}/auth/login`, {
         email,
         password,
       });

@@ -2,6 +2,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
+
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
+
+
 function LoginAdmin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -13,7 +18,7 @@ function LoginAdmin() {
     setError(null); // เคลียร์ error เก่าก่อน
     setLoading(true);
     try {
-      const response = await axios.post("http://localhost:4001/auth/admin/login", {
+      const response = await axios.post(`${API_URL}/auth/admin/login`, {
         email,
         password,
       });

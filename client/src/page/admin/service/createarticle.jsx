@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { AwardIcon, Upload, X } from "lucide-react";
 import axios from "axios";
 
-
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
 
 export default function CreateArticle() {
 
@@ -40,7 +40,7 @@ export default function CreateArticle() {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get("http://localhost:4001/posts/category"); // URL API category ของคุณ
+      const response = await axios.get(`${API_URL}/posts/category`); // URL API category ของคุณ
       const data = response.data.categories || [];
       isCategories(data);
     } catch (error) {
@@ -72,7 +72,7 @@ export default function CreateArticle() {
       console.log("Sending payload:", payload);
 
       const response = await axios.post(
-        "http://localhost:4001/posts",
+        `${API_URL}/posts`,
         payload,
         {
           headers: {
@@ -101,7 +101,7 @@ export default function CreateArticle() {
     }
 
     try{
-      const result = await axios.get("http://localhost:4001/auth/get-user", {
+      const result = await axios.get(`${API_URL}/auth/get-user`, {
   headers: {
     Authorization: `Bearer ${token}`,  // ส่ง token ในรูปแบบ Bearer token
   },

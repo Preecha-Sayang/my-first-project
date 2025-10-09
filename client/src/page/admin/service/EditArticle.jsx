@@ -16,10 +16,13 @@ export default function EditArticle({ postId }) {
 
   const fileInputRef = useRef(null);
 
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
+
+
   // ✅ โหลดข้อมูลบทความจาก postId
   const fetchPost = async () => {
     try {
-      const res = await axios.get(`http://localhost:4001/posts/${postId}`);
+      const res = await axios.get(`${API_URL}/posts/${postId}`);
       const post = res.data;
 
       setTitle(post.title);
@@ -35,7 +38,7 @@ export default function EditArticle({ postId }) {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get("http://localhost:4001/posts/category");
+      const res = await axios.get(`${API_URL}/posts/category`);
       setCategories(res.data.categories || []);
     } catch (err) {
       console.error("Error loading categories:", err);
@@ -76,7 +79,7 @@ export default function EditArticle({ postId }) {
         status_id,
       };
 
-      await axios.put(`http://localhost:4001/posts/${postId}`, payload, {
+      await axios.put(`${API_URL}/posts/${postId}`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
