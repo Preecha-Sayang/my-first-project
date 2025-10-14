@@ -5,8 +5,8 @@ import EditArticle from "./service/EditArticle";
 import CategoriesManage from "./service/category";
 import CreateCatrgory from "./service/categorycreate";
 import ProfileAdmin from "./service/profileadmin";
-import ResetPassword from "@/component/forprofile/forgetpassword";
 import AdminResetPassword from "./service/adminresetpassword";
+import NotificationRealtime from "./service/noctification";
 
 const menuitem = [
   { label: "Article management", img: "/contain/notebook_light.svg" },
@@ -43,7 +43,7 @@ function AdminService() {
       case "Profile":
         return <ProfileAdmin/>;
       case "Notification":
-        return <p>hi1</p>;
+        return <NotificationRealtime/>;
       case "Reset password":
         return <AdminResetPassword/>;
       default:
