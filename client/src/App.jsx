@@ -8,6 +8,8 @@ import SignUp from "./page/signin";
 import Profilepage from "./page/profile";
 import LoginAdmin from "./page/admin/loginadmin";
 import AdminService from "./page/admin/service";
+import AuthRoute from "./routes/AuthRoute";
+import ProtectedRoute from "./routes/ProtectedRoute";
 
 
 
@@ -22,13 +24,40 @@ function App() {
     <div className="App">
         <Routes>
           <Route path="/" element={<HomePage />} />
+
            <Route path="/post/:postId" element={<ViewPostPage/>} />
+
            <Route path="*" element={<NotFoundPage />} />
-           <Route path="/login" element={<LoginPage/>}/>
-           <Route path="/SignUp" element={<SignUp/>}/>
-           <Route path="/profile" element={<Profilepage/>}/>
-           <Route path="/admin/login" element={<LoginAdmin/>}/>
-           <Route path="/admin/service" element={<AdminService/>}/>
+
+           <Route path="/login" element={
+            <AuthRoute>
+              <LoginPage/>              
+            </AuthRoute>
+            }/>
+
+           <Route path="/SignUp" element={
+            <AuthRoute>
+                <SignUp/>
+            </AuthRoute>
+          }/>
+           <Route path="/profile" element={
+            <ProtectedRoute>
+              <Profilepage/>
+            </ProtectedRoute>
+            }/>
+
+           <Route path="/admin/login" element={
+            <AuthRoute>
+              <LoginAdmin/>
+            </AuthRoute>
+          }/>
+
+           <Route path="/admin/service" element={
+            <ProtectedRoute requiredRole="admin">
+             <AdminService/>
+            </ProtectedRoute>
+          }/>
+
         </Routes>
       <Toaster
         toastOptions={{

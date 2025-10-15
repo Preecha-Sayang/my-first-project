@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import { supabase } from "@/supabaseClient";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
 
 export default function AdminLoginPage() {
@@ -35,7 +36,10 @@ export default function AdminLoginPage() {
       });
 
       const { access_token } = res.data;
-
+      await supabase.auth.setSession({
+      access_token,
+      refresh_token: access_token,
+    });
       // บันทึก token และ redirect หรือแสดงข้อความสำเร็จ
       localStorage.setItem("token", access_token);
       alert("Login success!");

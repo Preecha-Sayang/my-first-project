@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import NotificationBell from "./notification";
+import { supabase } from "@/supabaseClient";
 
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
@@ -50,11 +51,13 @@ function NavBar() {
     fetchuser();
   }, []);
 
-  function logout() {
-    localStorage.removeItem("token");
-    setLogin(false);
-    window.location.reload();
-  }
+  async function logout() {
+  await supabase.auth.signOut(); // ออกจากระบบ Supabase
+  localStorage.removeItem("token");
+  localStorage.removeItem("acesstoken");
+  setLogin(false);
+  window.location.reload();
+}
 
   const handleMobileClose = () => {
     setIsOpen(false);
@@ -72,12 +75,11 @@ function NavBar() {
           {currentUserId && (
             <NotificationBell
               currentUserId={currentUserId}
-              onViewAll={() => navigate("/notifications")}
             />
           )}
 
-          {/* User Profile Dropdown */}
-          <div>
+          {/* User Profile Dropdown - Desktop */}
+          <div className="hidden md:block">
             <button
               className="flex flex-row gap-[12px] justify-center items-center hover:cursor-pointer"
               type="button"
@@ -133,6 +135,31 @@ function NavBar() {
                 </button>
               </div>
             )}
+          </div>
+
+          {/* Hamburger Menu - Mobile */}
+          <div className="md:hidden flex items-center">
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              aria-label="Toggle menu"
+              className="flex flex-col justify-center items-center gap-1"
+            >
+              <span
+                className={`block w-6 h-0.5 bg-black transition-transform ${
+                  isOpen ? "rotate-45 translate-y-1.5" : ""
+                }`}
+              ></span>
+              <span
+                className={`block w-6 h-0.5 bg-black transition-opacity ${
+                  isOpen ? "opacity-0" : "opacity-100"
+                }`}
+              ></span>
+              <span
+                className={`block w-6 h-0.5 bg-black transition-transform ${
+                  isOpen ? "-rotate-45 -translate-y-1.5" : ""
+                }`}
+              ></span>
+            </button>
           </div>
         </div>
       ) : (
@@ -203,6 +230,59 @@ function NavBar() {
             </div>
           )}
         </>
+      )}
+
+      {/* Mobile Menu for Logged In Users */}
+      {login && isOpen && (
+        <div className="absolute top-[60px] left-0 w-full bg-white flex flex-col items-start gap-2 py-4 border-b-2 border-gray-200 md:hidden">
+          <div className="w-full px-4 py-2 flex items-center gap-3">
+            <img
+              src={image || "/default-profile.jpg"}
+              alt="image-profile"
+              className="w-10 h-10 rounded-full object-cover border"
+            />
+            <p className="text-sm font-medium">{name}</p>
+          </div>
+          <Link
+            to="/profile"
+            state={{ category: "Profile" }}
+            className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex flex-row gap-2 items-center"
+            onClick={handleMobileClose}
+          >
+            <UserPen size={18} />
+            <p>Profile</p>
+          </Link>
+
+          <Link
+            to="/profile"
+            state={{ category: "Reset password" }}
+            className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex flex-row gap-2 items-center"
+            onClick={handleMobileClose}
+          >
+            <RotateCw size={18} />
+            <p>Reset password</p>
+          </Link>
+
+          <Link
+            to={"/"}
+            className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex flex-row gap-2 items-center"
+            onClick={handleMobileClose}
+          >
+            <CircleArrowOutUpRight size={18} />
+            <p>Admin</p>
+          </Link>
+
+          <button
+            className="w-full text-left px-4 py-2 text-sm text-gray-500 flex flex-row gap-2 items-center hover:bg-gray-100"
+            onClick={() => {
+              logout();
+              handleMobileClose();
+            }}
+          >
+            <LogOut size={18} />
+            <p>Logout</p>
+          </button>
+        </div>
       )}
     </nav>
   );

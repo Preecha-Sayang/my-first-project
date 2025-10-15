@@ -1,29 +1,13 @@
 import { useState, useEffect } from "react";
-import axios from "axios"; // เพิ่ม import axios
-import { createClient } from "@supabase/supabase-js";
-import { Bell, Trash2, Check, Eye } from "lucide-react";
+import axios from "axios";
+import { supabase } from "@/supabaseClient";
+import { Bell, Trash2, Check } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 
-
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
-
-// สร้าง Supabase client ธรรมดา
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// ⭐ ฟังก์ชันสร้าง Supabase client ที่มี token
-const getAuthedSupabase = () => {
-  const token = localStorage.getItem("token");
-  return createClient(supabaseUrl, supabaseAnonKey, {
-    global: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  });
-};
 
 function NotificationPage() {
   const [notifications, setNotifications] = useState([]);
@@ -32,37 +16,30 @@ function NotificationPage() {
   const [username, setUsername] = useState("");
   const [name, setName] = useState("");
   const [profilePic, setProfilePic] = useState("");
-  const [filter, setFilter] = useState("all"); // all, unread, read
+  const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(1);
   const notificationsPerPage = 6;
   const [loading, setLoading] = useState(true);
-  
-  // โหลด User และข้อมูล profile
- useEffect(() => {
+  const navigate = useNavigate();
+
+  // โหลด User
+  useEffect(() => {
     const loadUser = async () => {
       try {
         const token = localStorage.getItem("token");
-        
         const res = await axios.get(`${API_URL}/auth/get-user`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         const user = res.data;
-        console.log("currentUser:", user);
         if (user) {
           setCurrentUser(user);
-
-          // ⭐ ใช้ getAuthedSupabase() แทน supabase
-          const supabase = getAuthedSupabase();
-          
           const { data: userData, error } = await supabase
             .from("users")
             .select("role, username, name, profile_pic")
             .eq("id", user.id)
             .single();
-          if (error) {
-            console.error("fetch user profile error:", error);
-          } else if (userData) {
+          if (!error && userData) {
             setUserRole(userData.role || "user");
             setUsername(userData.username || "");
             setName(userData.name || "");
@@ -78,37 +55,32 @@ function NotificationPage() {
     loadUser();
   }, []);
 
-  // โหลดการแจ้งเตือน
-   useEffect(() => {
+  // โหลดแจ้งเตือน
+  useEffect(() => {
     if (!currentUser) return;
-
     const fetchNotifications = async () => {
-      const supabase = getAuthedSupabase(); // ⭐ เพิ่มบรรทัดนี้
-      
       const { data, error } = await supabase
         .from("notifications")
-        .select("*")
+        .select(
+          `
+    id, user_id, type, title, message, post_id, is_read, created_at,
+    actor:actor_id (
+      username,
+      profile_pic
+    )
+  `
+        )
         .eq("user_id", currentUser.id)
         .eq("is_deleted", false)
         .order("created_at", { ascending: false });
-
-      console.log("notifications fetch:", currentUser.id);
-
-      if (error) {
-        console.error("โหลดการแจ้งเตือนผิดพลาด:", error);
-        return;
-      }
-      setNotifications(data || []);
+      if (!error) setNotifications(data || []);
     };
     fetchNotifications();
   }, [currentUser]);
 
-  // Subscribe realtime
+  // Real-Time
   useEffect(() => {
     if (!currentUser) return;
-
-    const supabase = getAuthedSupabase(); // ⭐ เพิ่มบรรทัดนี้
-    
     const channel = supabase
       .channel(`notifications:${currentUser.id}`)
       .on(
@@ -121,7 +93,6 @@ function NotificationPage() {
         },
         (payload) => {
           const { event, new: newData, old: oldData } = payload;
-          console.log("notif realtime payload:", payload);
           if (event === "INSERT") {
             setNotifications((prev) => [newData, ...prev]);
             setPage(1);
@@ -138,9 +109,7 @@ function NotificationPage() {
             }
           }
           if (event === "DELETE") {
-            setNotifications((prev) =>
-              prev.filter((n) => n.id !== oldData.id)
-            );
+            setNotifications((prev) => prev.filter((n) => n.id !== oldData.id));
           }
         }
       )
@@ -151,25 +120,21 @@ function NotificationPage() {
     };
   }, [currentUser]);
 
-  // ทำเครื่องหมายอ่าน / ลบ / ทั้งหมด (โค้ดเหมือนเดิม)...
-  const markAsRead = async (id) => {
-    const supabase = getAuthedSupabase(); // ⭐ เพิ่มบรรทัดนี้
-    
-    const { error } = await supabase
-      .from("notifications")
-      .update({ is_read: true })
-      .eq("id", id);
-    if (!error) {
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
-      );
+  // เปิดแจ้งเตือน + ไปหน้าโพสต์
+  const handleOpenNotification = async (notif) => {
+    if (!notif.is_read) {
+      await supabase
+        .from("notifications")
+        .update({ is_read: true })
+        .eq("id", notif.id);
+    }
+    if (notif.post_id) {
+      navigate(`/post/${notif.post_id}`);
     }
   };
 
-
-const deleteNotification = async (id) => {
-    const supabase = getAuthedSupabase(); // ⭐ เพิ่มบรรทัดนี้
-    
+  // ลบ
+  const deleteNotification = async (id) => {
     const { error } = await supabase
       .from("notifications")
       .update({ is_deleted: true })
@@ -179,37 +144,29 @@ const deleteNotification = async (id) => {
     }
   };
 
+  // ทำเครื่องหมายอ่านทั้งหมด
   const markAllAsRead = async () => {
     const unreadIds = notifications.filter((n) => !n.is_read).map((n) => n.id);
     if (unreadIds.length === 0) return;
-
-    const supabase = getAuthedSupabase(); // ⭐ เพิ่มบรรทัดนี้
-    
-    const { error } = await supabase
+    await supabase
       .from("notifications")
       .update({ is_read: true })
       .in("id", unreadIds);
-    if (!error) {
-      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-    }
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
   };
 
+  // ลบที่อ่านแล้ว
   const deleteAllRead = async () => {
     const readIds = notifications.filter((n) => n.is_read).map((n) => n.id);
     if (readIds.length === 0) return;
-
-    const supabase = getAuthedSupabase(); // ⭐ เพิ่มบรรทัดนี้
-    
-    const { error } = await supabase
+    await supabase
       .from("notifications")
       .update({ is_deleted: true })
       .in("id", readIds);
-    if (!error) {
-      setNotifications((prev) => prev.filter((n) => !n.is_read));
-    }
+    setNotifications((prev) => prev.filter((n) => !n.is_read));
   };
 
-  // Filter + Pagination (เหมือนเดิม)
+  // Filter + Pagination
   const filteredNotifications = notifications.filter((n) => {
     if (filter === "unread") return !n.is_read;
     if (filter === "read") return n.is_read;
@@ -222,23 +179,25 @@ const deleteNotification = async (id) => {
     indexOfFirstNotif,
     indexOfLastNotif
   );
-  const totalPages = Math.ceil(filteredNotifications.length / notificationsPerPage);
+  const totalPages = Math.ceil(
+    filteredNotifications.length / notificationsPerPage
+  );
 
-dayjs.extend(utc);
-dayjs.extend(timezone);
+  dayjs.extend(utc);
+  dayjs.extend(timezone);
 
-const formatTime = (timestamp) => {
-  const date = dayjs.utc(timestamp).tz("Asia/Bangkok");
-  const now = dayjs().tz("Asia/Bangkok");
-  const diffMinutes = now.diff(date, "minute");
-  const diffHours = now.diff(date, "hour");
-  const diffDays = now.diff(date, "day");
+  const formatTime = (timestamp) => {
+    const date = dayjs.utc(timestamp).tz("Asia/Bangkok");
+    const now = dayjs().tz("Asia/Bangkok");
+    const diffMinutes = now.diff(date, "minute");
+    const diffHours = now.diff(date, "hour");
+    const diffDays = now.diff(date, "day");
 
-  if (diffMinutes < 1) return "เมื่อสักครู่";
-  if (diffMinutes < 60) return `${diffMinutes} นาทีที่แล้ว`;
-  if (diffHours < 24) return `${diffHours} ชั่วโมงที่แล้ว`;
-  return `${diffDays} วันที่แล้ว`;
-};
+    if (diffMinutes < 1) return "เมื่อสักครู่";
+    if (diffMinutes < 60) return `${diffMinutes} นาทีที่แล้ว`;
+    if (diffHours < 24) return `${diffHours} ชั่วโมงที่แล้ว`;
+    return `${diffDays} วันที่แล้ว`;
+  };
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
@@ -246,7 +205,10 @@ const formatTime = (timestamp) => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <Bell size={48} className="mx-auto mb-4 text-gray-300 animate-pulse" />
+          <Bell
+            size={48}
+            className="mx-auto mb-4 text-gray-300 animate-pulse"
+          />
           <p className="text-gray-500">กำลังโหลด...</p>
         </div>
       </div>
@@ -255,7 +217,6 @@ const formatTime = (timestamp) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <div className="bg-white border-b shadow-sm">
         <div className="max-w-6xl mx-auto p-6">
           <div className="flex justify-between items-center mb-4">
@@ -282,7 +243,6 @@ const formatTime = (timestamp) => {
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex gap-2">
               {unreadCount > 0 && (
                 <button
@@ -350,7 +310,7 @@ const formatTime = (timestamp) => {
         </div>
       </div>
 
-      {/* Notifications List */}
+      {/* Notification List */}
       <div className="max-w-6xl mx-auto p-6">
         {currentNotifications.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm p-12 text-center">
@@ -375,11 +335,17 @@ const formatTime = (timestamp) => {
             {currentNotifications.map((notif) => (
               <div
                 key={notif.id}
-                className={`bg-white rounded-lg shadow-sm p-5 transition-all hover:shadow-md ${
+                onClick={() => handleOpenNotification(notif)}
+                className={`cursor-pointer bg-white rounded-lg shadow-sm p-5 transition-all hover:shadow-md ${
                   !notif.is_read ? "border-l-4 border-l-blue-500" : ""
                 }`}
               >
                 <div className="flex justify-between items-start gap-4">
+                  <img
+                    src={notif.actor?.profile_pic || "/default-avatar.png"}
+                    alt={notif.actor?.username}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="font-semibold text-gray-800 text-lg">
@@ -395,19 +361,12 @@ const formatTime = (timestamp) => {
                     </p>
                   </div>
 
-                  {/* Action Buttons */}
                   <div className="flex gap-2 flex-shrink-0">
-                    {!notif.is_read && (
-                      <button
-                        onClick={() => markAsRead(notif.id)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="ทำเครื่องหมายว่าอ่านแล้ว"
-                      >
-                        <Eye size={20} />
-                      </button>
-                    )}
                     <button
-                      onClick={() => deleteNotification(notif.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteNotification(notif.id);
+                      }}
                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       title="ลบการแจ้งเตือน"
                     >
@@ -436,7 +395,7 @@ const formatTime = (timestamp) => {
                 const pageNum = idx + 1;
                 return (
                   <button
-                    key={`page-${pageNum}`} // เพิ่ม key
+                    key={`page-${pageNum}`}
                     onClick={() => setPage(pageNum)}
                     className={`px-4 py-2 rounded-lg transition-colors ${
                       page === pageNum

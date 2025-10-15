@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-
+import { supabase } from "@/supabaseClient";
 
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
@@ -30,7 +30,10 @@ function LoginAdmin() {
         setLoading(false);
         return;
       }
-
+      await supabase.auth.setSession({
+            access_token,
+            refresh_token: access_token,
+          });
       // ✅ Login สำเร็จและเป็น admin
       localStorage.setItem("token", data.access_token); // หรือจะใช้ cookie ก็ได้
       navigate("/");

@@ -1,37 +1,33 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, Trash2, Eye } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
+import { Bell } from "lucide-react";
+import { supabase } from "@/supabaseClient";
+import { useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// ฟังก์ชันสร้าง Supabase client ที่มี token
-const getAuthedSupabase = () => {
-  const token = localStorage.getItem("token");
-  return createClient(supabaseUrl, supabaseAnonKey, {
-    global: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  });
-};
-
-function NotificationBell({ currentUserId, onViewAll }) {
+function NotificationBell({ currentUserId }) {
   const [notifications, setNotifications] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
+  const navigate = useNavigate();
 
-  // โหลดการแจ้งเตือน
+  // Load Notifications
   useEffect(() => {
     if (!currentUserId) return;
 
     const fetchNotifications = async () => {
-      const supabase = getAuthedSupabase();
-
       const { data, error } = await supabase
         .from("notifications")
-        .select("*")
+        .select(
+          `
+          id, user_id, type, title, message, post_id, is_read, created_at,
+          actor:actor_id (
+            username,
+            profile_pic
+          )
+        `
+        )
         .eq("user_id", currentUserId)
         .eq("is_deleted", false)
         .order("created_at", { ascending: false })
@@ -48,11 +44,9 @@ function NotificationBell({ currentUserId, onViewAll }) {
     fetchNotifications();
   }, [currentUserId]);
 
-  // Subscribe realtime
+  // Realtime Subscribe
   useEffect(() => {
     if (!currentUserId) return;
-
-    const supabase = getAuthedSupabase();
 
     const channel = supabase
       .channel(`notifications:${currentUserId}`)
@@ -67,10 +61,12 @@ function NotificationBell({ currentUserId, onViewAll }) {
         (payload) => {
           const { event, new: newData, old: oldData } = payload;
 
+          // INSERT Notification
           if (event === "INSERT") {
             setNotifications((prev) => [newData, ...prev.slice(0, 4)]);
           }
 
+          // UPDATE Notification
           if (event === "UPDATE") {
             if (newData.is_deleted) {
               setNotifications((prev) =>
@@ -83,10 +79,9 @@ function NotificationBell({ currentUserId, onViewAll }) {
             }
           }
 
+          // DELETE Notification
           if (event === "DELETE") {
-            setNotifications((prev) =>
-              prev.filter((n) => n.id !== oldData.id)
-            );
+            setNotifications((prev) => prev.filter((n) => n.id !== oldData.id));
           }
         }
       )
@@ -97,7 +92,7 @@ function NotificationBell({ currentUserId, onViewAll }) {
     };
   }, [currentUserId]);
 
-  // ปิด dropdown เมื่อคลิกนอก
+  // Close dropdown if clicked outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -114,10 +109,8 @@ function NotificationBell({ currentUserId, onViewAll }) {
     };
   }, [showDropdown]);
 
-  // ฟังก์ชัน mark as read
+  // Mark single notification as Read
   const markAsRead = async (id) => {
-    const supabase = getAuthedSupabase();
-
     await supabase.from("notifications").update({ is_read: true }).eq("id", id);
 
     setNotifications((prev) =>
@@ -125,10 +118,8 @@ function NotificationBell({ currentUserId, onViewAll }) {
     );
   };
 
-  // ฟังก์ชันลบการแจ้งเตือน
+  // Delete Notification
   const deleteNotification = async (id) => {
-    const supabase = getAuthedSupabase();
-
     await supabase
       .from("notifications")
       .update({ is_deleted: true })
@@ -137,23 +128,45 @@ function NotificationBell({ currentUserId, onViewAll }) {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
-  // ฟังก์ชัน format เวลา
-  const formatTime = (timestamp) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diff = now - date;
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
+  // Navigate to post
+  const handleNavigate = async (notif) => {
+    if (!notif.post_id) return;
 
-    if (minutes < 1) return "เมื่อสักครู่";
-    if (minutes < 60) return `${minutes} นาทีที่แล้ว`;
-    if (hours < 24) return `${hours} ชั่วโมงที่แล้ว`;
-    return `${days} วันที่แล้ว`;
+    await markAsRead(notif.id);
+    navigate(`/post/${notif.post_id}`);
+    setShowDropdown(false);
   };
 
-  // นับจำนวน unread
+  // Format time
+  dayjs.extend(utc);
+  dayjs.extend(timezone);
+
+  const formatTime = (timestamp) => {
+    const date = dayjs.utc(timestamp).tz("Asia/Bangkok");
+    const now = dayjs().tz("Asia/Bangkok");
+    const diffMinutes = now.diff(date, "minute");
+    const diffHours = now.diff(date, "hour");
+    const diffDays = now.diff(date, "day");
+
+    if (diffMinutes < 1) return "เมื่อสักครู่";
+    if (diffMinutes < 60) return `${diffMinutes} นาทีที่แล้ว`;
+    if (diffHours < 24) return `${diffHours} ชั่วโมงที่แล้ว`;
+    return `${diffDays} วันที่แล้ว`;
+  };
+
+  // Count unread notifications
   const unreadCount = notifications.filter((n) => !n.is_read).length;
+
+  const markAllAsRead = async () => {
+    if (notifications.length === 0) return;
+
+    await supabase
+      .from("notifications")
+      .update({ is_read: true })
+      .eq("user_id", currentUserId);
+
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+  };
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -161,7 +174,12 @@ function NotificationBell({ currentUserId, onViewAll }) {
         className="relative w-10 h-10 rounded-full flex justify-center items-center bg-gray-100 hover:bg-gray-200 transition-colors"
         aria-label="Notifications"
         type="button"
-        onClick={() => setShowDropdown(!showDropdown)}
+        onClick={() => {
+          setShowDropdown(!showDropdown);
+          if (!showDropdown) {
+            markAllAsRead();
+          }
+        }}
       >
         <Bell size={20} />
         {unreadCount > 0 && (
@@ -175,19 +193,6 @@ function NotificationBell({ currentUserId, onViewAll }) {
 
       {showDropdown && (
         <div className="absolute right-0 mt-3 w-[380px] bg-white rounded-lg shadow-xl z-50 border max-h-[500px] overflow-y-auto">
-          <div className="sticky top-0 bg-white border-b px-4 py-3 flex justify-between items-center">
-            <h3 className="font-semibold text-gray-800">การแจ้งเตือน</h3>
-            <button
-              onClick={() => {
-                setShowDropdown(false);
-                if (onViewAll) onViewAll();
-              }}
-              className="text-sm text-blue-600 hover:text-blue-700"
-            >
-              ดูทั้งหมด
-            </button>
-          </div>
-
           {notifications.length === 0 ? (
             <div className="px-4 py-8 text-center text-gray-500">
               <Bell size={48} className="mx-auto mb-2 text-gray-300" />
@@ -198,11 +203,18 @@ function NotificationBell({ currentUserId, onViewAll }) {
               {notifications.map((notif) => (
                 <div
                   key={notif.id}
-                  className={`px-4 py-3 hover:bg-gray-50 transition-colors ${
+                  className={`px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer ${
                     !notif.is_read ? "bg-blue-50" : ""
                   }`}
+                  onClick={() => handleNavigate(notif)}
                 >
                   <div className="flex items-start gap-3">
+                    <img
+                      src={notif.actor?.profile_pic || "/default-avatar.png"}
+                      alt={notif.actor?.username}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <p className="font-semibold text-gray-800 text-sm">
@@ -218,25 +230,6 @@ function NotificationBell({ currentUserId, onViewAll }) {
                       <span className="text-xs text-gray-400">
                         {formatTime(notif.created_at)}
                       </span>
-                    </div>
-
-                    <div className="flex gap-1 flex-shrink-0">
-                      {!notif.is_read && (
-                        <button
-                          onClick={() => markAsRead(notif.id)}
-                          className="p-1.5 text-blue-600 hover:bg-blue-100 rounded transition-colors"
-                          title="ทำเครื่องหมายว่าอ่านแล้ว"
-                        >
-                          <Eye size={16} />
-                        </button>
-                      )}
-                      <button
-                        onClick={() => deleteNotification(notif.id)}
-                        className="p-1.5 text-red-600 hover:bg-red-100 rounded transition-colors"
-                        title="ลบการแจ้งเตือน"
-                      >
-                        <Trash2 size={16} />
-                      </button>
                     </div>
                   </div>
                 </div>
