@@ -1,22 +1,31 @@
-import { useState } from "react";
+// Updated LoginAdmin component with correct token handling
+
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { supabase } from "@/supabaseClient";
-
+import { useEffect, useRef, useState } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
-
 
 function LoginAdmin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);  // สำหรับสถานะ loading
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
   const handleLogin = async () => {
-    setError(null); // เคลียร์ error เก่าก่อน
+    setError(null);
     setLoading(true);
+
     try {
       const response = await axios.post(`${API_URL}/auth/admin/login`, {
         email,
@@ -24,26 +33,18 @@ function LoginAdmin() {
       });
 
       const data = response.data;
+      const access_token = data.access_token;
 
-      if (!data.is_admin) {
-        setError("Access denied: You are not an admin.");
-        setLoading(false);
-        return;
-      }
       await supabase.auth.setSession({
-            access_token,
-            refresh_token: access_token,
-          });
-      // ✅ Login สำเร็จและเป็น admin
-      localStorage.setItem("token", data.access_token); // หรือจะใช้ cookie ก็ได้
+        access_token,
+        refresh_token: access_token,
+      });
+
+      localStorage.setItem("token", access_token);
       navigate("/");
     } catch (err) {
-      if (err.response && err.response.data && err.response.data.error) {
-        setError(err.response.data.error);
-      } else {
-        setError("Something went wrong. Please try again.");
-      }
-      setPassword(""); // ล้างรหัสผ่านถ้าผิดพลาด
+      setError(err.response?.data?.error || "Something went wrong.");
+      setPassword("");
     } finally {
       setLoading(false);
     }
@@ -63,7 +64,10 @@ function LoginAdmin() {
 
           <div className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm text-gray-600 mb-2">
+              <label
+                htmlFor="email"
+                className="block text-sm text-gray-600 mb-2"
+              >
                 Email
               </label>
               <input
@@ -78,7 +82,10 @@ function LoginAdmin() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm text-gray-600 mb-2">
+              <label
+                htmlFor="password"
+                className="block text-sm text-gray-600 mb-2"
+              >
                 Password
               </label>
               <input
@@ -99,16 +106,17 @@ function LoginAdmin() {
             <div>
               <button
                 onClick={handleLogin}
-                className={`w-full bg-gray-800 text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors
-                ${loading ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-700"}`}
+                className={`w-full bg-gray-800 text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors ${
+                  loading
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-gray-700"
+                }`}
                 disabled={loading}
               >
                 {loading ? "Logging in..." : "Log in"}
               </button>
             </div>
           </div>
-
-          <div className="mt-6 text-center"></div>
         </div>
       </div>
     </div>

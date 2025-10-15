@@ -37,6 +37,11 @@ function BlogCard({ category, keyword }) {
               keyword: debouncedKeyword?.trim() || undefined
             }
           });
+
+          console.log("📦 DATA FROM API ===>", result.data);  // ✅ ตรวจว่ามี posts ไหม
+
+          
+
           if (page === 1) {
             setData(result.data.posts); 
           } else {
@@ -54,13 +59,14 @@ function BlogCard({ category, keyword }) {
       }
     }
     fetchdata();
+
   }, [page, category, debouncedKeyword]);
 
 
 
 
   const filteredData = data;
-
+  
     function handlePage(){
       setPage((prev)=>prev+1)
     }
@@ -112,7 +118,7 @@ function BlogCard({ category, keyword }) {
                     className="w-8 h-8 rounded-full"
                   />
                   <p className="text-sm font-medium text-gray-800">
-                    {item.author}
+                    {item.name} |
                   </p>
                   <p className="text-xs text-gray-500">
                     {new Date(item.date).toLocaleDateString("en-US", {

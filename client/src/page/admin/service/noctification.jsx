@@ -216,33 +216,9 @@ function NotificationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b shadow-sm">
-        <div className="max-w-6xl mx-auto p-6">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-3">
-              {profilePic && (
-                <img
-                  src={profilePic}
-                  alt="Avatar"
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-              )}
-              <div>
-                <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                  <Bell size={28} />
-                  การแจ้งเตือน
-                </h1>
-                <p className="text-sm text-gray-500 mt-1">
-                  สวัสดี, {name || username} • Role:{" "}
-                  {userRole === "admin" ? "👑 Admin" : "👤 User"} •{" "}
-                  {unreadCount > 0
-                    ? `${unreadCount} ข้อความใหม่`
-                    : "ไม่มีข้อความใหม่"}
-                </p>
-              </div>
-            </div>
-
+    <div className="min-h-screen bg-gray-50 p-8">
+          <div className="p-6 border-b flex justify-between items-center">
+            <p className="text-xl font-semibold">Article management</p>
             <div className="flex gap-2">
               {unreadCount > 0 && (
                 <button
@@ -307,8 +283,8 @@ function NotificationPage() {
               อ่านแล้ว ({notifications.filter((n) => n.is_read).length})
             </button>
           </div>
-        </div>
-      </div>
+        
+      
 
       {/* Notification List */}
       <div className="max-w-6xl mx-auto p-6">

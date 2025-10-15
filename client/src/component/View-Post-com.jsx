@@ -29,6 +29,8 @@ export default function ViewPost() {
   const [page, setPage] = useState(1);
   const [comments, setComments] = useState([]);
   const [commentsPagination, setCommentsPagination] = useState(null);
+  const [admin, setAdmin] = useState(null);
+
 
   async function fetchdata(pageNumber = 1, append = false) {
     try {
@@ -57,11 +59,24 @@ export default function ViewPost() {
     fetchdata(1, false);
   }, [postId]);
 
+
+  const fetchAdmin = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/posts/admin/profile`);
+        setAdmin(response.data.profile);
+      } catch (error) {
+        console.error("Error fetching admin:", error);
+      }
+    };
+
+
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
       setIsLoggedIn(true);
-    }
+    };
+    fetchAdmin();
   }, []);
 
   if (!post && !error) return <p>Loading...</p>;
@@ -302,26 +317,20 @@ export default function ViewPost() {
           <div className="flex items-center mb-4">
             <div className="w-16 h-16 rounded-full overflow-hidden mr-4">
               <img
-                src="/herosection.png"
+                src={admin?.profile_pic || "./default-profile.jpg"}
                 alt="Thompson P."
                 className="object-cover w-16 h-16"
               />
             </div>
             <div>
               <p className="text-sm">Author</p>
-              <h3 className="text-2xl font-bold">Thompson P.</h3>
+              <h3 className="text-2xl font-bold">{admin?.name || "ไม่มีข้อมูล"}</h3>
             </div>
           </div>
           <hr className="border-gray-300 mb-4" />
           <div className="text-muted-foreground space-y-4">
             <p>
-              I am a pet enthusiast and freelance writer who specializes in
-              animal behavior and care. With a deep love for cats, I enjoy
-              sharing insights on feline companionship and wellness.
-            </p>
-            <p>
-              When I&apos;m not writing, I spend time volunteering at my local
-              animal shelter, helping cats find loving homes.
+              {admin?.bio || "ไม่มีข้อมูล"}
             </p>
           </div>
         </div>

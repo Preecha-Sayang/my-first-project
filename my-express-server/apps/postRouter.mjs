@@ -5,14 +5,13 @@ import protectUser from "../middleware/protectUser.mjs";
 import protectAdmin from "../middleware/protectAdmin.mjs";
 const postRouter = Router();
 
-postRouter.post("/", validatePostData,protectAdmin, async (req, res) => {
+postRouter.post("/", validatePostData, protectAdmin, async (req, res) => {
   const newPost = req.body;
   const userId = req.user.id;
 
   // แปลง category_id กับ status_id ให้เป็น integer
   const categoryId = parseInt(newPost.category_id, 10);
   const statusId = parseInt(newPost.status_id, 10);
-  
 
   try {
     const query = `
@@ -46,14 +45,13 @@ postRouter.post("/", validatePostData,protectAdmin, async (req, res) => {
 
     return res.status(201).json({
       message: "Created post successfully",
-      data: createdPost
+      data: createdPost,
     });
-
   } catch (error) {
     console.error("Error creating post:", error);
     return res.status(500).json({
       message: "Server could not create post because database connection",
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -76,10 +74,11 @@ postRouter.get("/", async (req, res) => {
 
     // 3) เขียน Query เพื่อ Insert ข้อมูลโพสต์ ด้วย Connection Pool
     let query = `
-        SELECT posts.id, posts.image, categories.name AS category, posts.title, posts.description, posts.date, posts.content, statuses.status, posts.likes_count
+        SELECT posts.id, posts.image, categories.name AS category, posts.title, posts.description, posts.date, posts.content, statuses.status, posts.likes_count, users.name
         FROM posts
         INNER JOIN categories ON posts.category_id = categories.id
         INNER JOIN statuses ON posts.status_id = statuses.id
+        INNER JOIN users ON posts.user_id = users.id
       `;
     let values = [];
 
@@ -155,7 +154,7 @@ postRouter.get("/", async (req, res) => {
     if (offset > 0) {
       results.previousPage = safePage - 1;
     }
-    // 9) Return ตัว Response กลับไปหา Client ว่าสร้างสำเร็จ
+    // 9) Return ตัว Response กลับไปหา Client ว่าสร้างสำเร็
     return res.status(200).json(results);
   } catch {
     return res.status(500).json({
@@ -453,7 +452,6 @@ postRouter.post("/:postId/like", protectUser, async (req, res) => {
   }
 });
 
-
 postRouter.delete("/:categoryid/category", protectAdmin, async (req, res) => {
   // ลอจิกในการลบข้อมูลโพสต์ด้วย Id ในระบบ
 
@@ -512,6 +510,30 @@ postRouter.post("/category", protectAdmin, async (req, res) => {
       message: "Server could not create category because database connection",
       error: error.message,
     });
+  }
+});
+
+postRouter.get("/admin/profile", async (req, res) => {
+  try {
+    const result = await connectionPool.query(
+      `  SELECT name, bio, profile_pic 
+      FROM users 
+      WHERE role = 'admin'
+      AND bio IS NOT NULL
+      LIMIT 1`
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    return res.json({
+      success: true,
+      profile: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Error fetching admin:", error);
+    return res.status(500).json({ error: "Server Error" });
   }
 });
 

@@ -200,12 +200,12 @@ function ProfileAdmin() {
 
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Bio (max 120 letters)
+              Bio (max 250 letters)
             </label>
             <textarea
               value={introbio}
               onChange={(e) => {
-                if (e.target.value.length <= 120) {
+                if (e.target.value.length <= 250) {
                   setIntrobio(e.target.value);
                 }
               }}
@@ -213,7 +213,7 @@ function ProfileAdmin() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
             <div className="text-xs text-gray-500 mt-1 text-right">
-              {introbio.length}/120
+              {introbio.length}/250
             </div>
           </div>
         </div>
