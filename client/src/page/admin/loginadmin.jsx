@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { supabase } from "@/supabaseClient";
 import { useEffect, useRef, useState } from "react";
+import { useAuth } from "@/context/authentication"; // เพิ่ม import
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
 
@@ -13,6 +14,7 @@ function LoginAdmin() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { fetchUser } = useAuth(); // ดึง fetchUser จาก context
 
   const isMounted = useRef(true);
 
@@ -40,7 +42,13 @@ function LoginAdmin() {
         refresh_token: access_token,
       });
 
+      // เก็บ token และตั้ง axios header ทันที
       localStorage.setItem("token", access_token);
+      axios.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
+
+      // เรียก fetchUser เพื่ออัปเดต context (NavBar จะอ่านจาก context)
+      await fetchUser();
+
       navigate("/");
     } catch (err) {
       setError(err.response?.data?.error || "Something went wrong.");
