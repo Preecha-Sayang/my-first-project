@@ -21,7 +21,7 @@ function Profilepage() {
     const token = localStorage.getItem("token");
   try{
     const result = await axios.get(`${API_URL}/auth/get-user`,{
-      header:{
+      headers:{
         Authorization: `Bearer ${token}`,
       }   
     })

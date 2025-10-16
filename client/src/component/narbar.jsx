@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ChevronDown,
@@ -10,54 +10,33 @@ import {
 import axios from "axios";
 import NotificationBell from "./notification";
 import { supabase } from "@/supabaseClient";
-
+import { useAuth } from "@/context/authentication";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
 
 function NavBar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [login, setLogin] = useState(false);
   const [dropdown, setDropdown] = useState(false);
-  const [name, setName] = useState("");
-  const [image, setImage] = useState("");
-  const [currentUserId, setCurrentUserId] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setLogin(false);
-      return;
+  // ใช้ context แทนการเช็ค localStorage เอง
+  const { state, logout, fetchUser, isAuthenticated } = useAuth();
+  const user = state?.user;
+
+  // ถ้าต้องการ รีเฟรชข้อมูลเมื่อเมนูเปิดขึ้น (optional)
+  const handleProfileClick = async () => {
+    setDropdown((s) => !s);
+    if (isAuthenticated && !user) {
+      // กรณี race: พยายามดึง user ซ้ำจาก context
+      await fetchUser();
     }
+  };
 
-    const fetchuser = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/auth/get-user`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        setName(res.data.name);
-        setImage(res.data.profilePic);
-        setCurrentUserId(res.data.id);
-        setLogin(true);
-      } catch (e) {
-        console.error("User fetch failed:", e);
-        setLogin(false);
-      }
-    };
-
-    fetchuser();
-  }, []);
-
-  async function logout() {
-  await supabase.auth.signOut(); // ออกจากระบบ Supabase
-  localStorage.removeItem("token");
-  localStorage.removeItem("acesstoken");
-  setLogin(false);
-  window.location.reload();
-}
+  async function handleLogout() {
+    logout();
+    setDropdown(false);
+    navigate("/");
+  }
 
   const handleMobileClose = () => {
     setIsOpen(false);
@@ -69,28 +48,24 @@ function NavBar() {
         <img src="/hh..png" alt="logo" className="hover:cursor-pointer" />
       </Link>
 
-      {login ? (
+      {isAuthenticated ? (
         <div className="flex flex-row gap-[16px] justify-center items-center">
           {/* Notification Bell */}
-          {currentUserId && (
-            <NotificationBell
-              currentUserId={currentUserId}
-            />
-          )}
+          {user?.id && <NotificationBell currentUserId={user.id} />}
 
           {/* User Profile Dropdown - Desktop */}
           <div className="hidden md:block">
             <button
               className="flex flex-row gap-[12px] justify-center items-center hover:cursor-pointer"
               type="button"
-              onClick={() => setDropdown(!dropdown)}
+              onClick={handleProfileClick}
             >
               <img
-                src={image || "/default-profile.jpg"}
+                src={user?.profilePic || "/default-profile.jpg"}
                 alt="image-profile"
                 className="w-10 h-10 rounded-full object-cover border"
               />
-              <p className="text-sm">{name}</p>
+              <p className="text-sm">{user?.name || "User"}</p>
               <ChevronDown
                 className={`transition-transform ${
                   dropdown ? "rotate-180" : ""
@@ -128,7 +103,7 @@ function NavBar() {
 
                 <button
                   className="w-full text-left px-4 py-2 text-sm text-gray-500 flex flex-row gap-1 hover:bg-gray-100"
-                  onClick={() => logout()}
+                  onClick={handleLogout}
                 >
                   <LogOut />
                   <p>Logout</p>
@@ -233,15 +208,15 @@ function NavBar() {
       )}
 
       {/* Mobile Menu for Logged In Users */}
-      {login && isOpen && (
+      {isAuthenticated && isOpen && (
         <div className="absolute top-[60px] left-0 w-full bg-white flex flex-col items-start gap-2 py-4 border-b-2 border-gray-200 md:hidden">
           <div className="w-full px-4 py-2 flex items-center gap-3">
             <img
-              src={image || "/default-profile.jpg"}
+              src={user?.profilePic || "/default-profile.jpg"}
               alt="image-profile"
               className="w-10 h-10 rounded-full object-cover border"
             />
-            <p className="text-sm font-medium">{name}</p>
+            <p className="text-sm font-medium">{user?.name || "User"}</p>
           </div>
           <Link
             to="/profile"
@@ -275,7 +250,7 @@ function NavBar() {
           <button
             className="w-full text-left px-4 py-2 text-sm text-gray-500 flex flex-row gap-2 items-center hover:bg-gray-100"
             onClick={() => {
-              logout();
+              handleLogout();
               handleMobileClose();
             }}
           >

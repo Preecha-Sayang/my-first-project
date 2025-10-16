@@ -1,14 +1,17 @@
 import { useState } from "react";
-import axios from "axios";
-import { supabase } from "@/supabaseClient";
+import { useAuth } from "@/context/authentication";
+// import axios from "axios";
+// import { supabase } from "@/supabaseClient";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
 
-export default function AdminLoginPage() {
+export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isErrorEmail, setIsErrorEmail] = useState(false);
   const [isErrorPassword, setIsErrorPassword] = useState(false);
   const [error, setError] = useState(""); // เพิ่ม error message
+
+  const { login } = useAuth();
 
   const handleSubmit = async () => {
     let valid = true;
@@ -30,23 +33,14 @@ export default function AdminLoginPage() {
     if (!valid) return;
 
     try {
-      const res = await axios.post(`${API_URL}/auth/login`, {
-        email,
-        password,
-      });
-
-      const { access_token } = res.data;
-      await supabase.auth.setSession({
-      access_token,
-      refresh_token: access_token,
-    });
-      // บันทึก token และ redirect หรือแสดงข้อความสำเร็จ
-      localStorage.setItem("token", access_token);
-      alert("Login success!");
       setError("");
-      // window.location.href = "/admin/dashboard"; // หรือใช้ router
+      const result = await login({ email, password });
+      // AuthProvider.login จะ navigate เมื่อสำเร็จ
+      if (result && result.error) {
+        setError(result.error);
+      }
     } catch (err) {
-      setError(err.response?.data?.error || "Login failed");
+      setError(err?.message || "Login failed");
     }
   };
 
