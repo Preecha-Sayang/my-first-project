@@ -10,7 +10,7 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 4001;
 
-// ✅ Restrict CORS for security (Allow Frontend only)
+// ✅ Restrict CORS (อนุญาตเฉพาะ Frontend)
 app.use(
   cors({
     origin: process.env.CLIENT_ORIGIN || "*",
@@ -19,15 +19,22 @@ app.use(
 
 app.use(express.json());
 
-// ✅ Example: Check Supabase keys loaded
-if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
+// ✅ Check Environment Variables
+if (
+  !process.env.SUPABASE_URL ||
+  !process.env.SUPABASE_ANON_KEY ||
+  !process.env.SUPABASE_SERVICE_ROLE_KEY
+) {
   console.warn("⚠️ Warning: Supabase credentials are missing in .env or Render Environment Variables");
+} else {
+  console.log("✅ Supabase Environment Variables Loaded Successfully");
 }
 
-// ✅ Route modules
-app.use("/auth", authRouter); // /auth/login, /auth/register etc.
+// ✅ Routes
+app.use("/auth", authRouter);
 app.use("/posts", postRouter);
 
+// Root test
 app.get("/", (req, res) => {
   res.send("Backend is running via Render 🚀");
 });
