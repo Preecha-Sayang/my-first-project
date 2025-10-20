@@ -1,10 +1,7 @@
-// Updated LoginAdmin component with correct token handling
-
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { supabase } from "@/supabaseClient";
 import { useEffect, useRef, useState } from "react";
-import { useAuth } from "@/context/authentication"; // เพิ่ม import
+import { useAuth } from "@/context/authentication";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
 
@@ -14,7 +11,7 @@ function LoginAdmin() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { fetchUser } = useAuth(); // ดึง fetchUser จาก context
+  const { fetchUser } = useAuth();
 
   const isMounted = useRef(true);
 
@@ -29,32 +26,42 @@ function LoginAdmin() {
     setLoading(true);
 
     try {
+      // 1. Login และรับ token
       const response = await axios.post(`${API_URL}/auth/admin/login`, {
         email,
         password,
       });
 
-      const data = response.data;
-      const access_token = data.access_token;
+      const access_token = response.data.access_token;
 
-      await supabase.auth.setSession({
-        access_token,
-        refresh_token: access_token,
-      });
-
-      // เก็บ token และตั้ง axios header ทันที
+      // 2. เก็บ token ใน localStorage
       localStorage.setItem("token", access_token);
+
+      // 3. ตั้ง axios default header
       axios.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
 
-      // เรียก fetchUser เพื่ออัปเดต context (NavBar จะอ่านจาก context)
+      // 4. Fetch user data เพื่ออัปเดต AuthContext
       await fetchUser();
 
-      navigate("/");
+      // 5. Redirect to home
+      if (isMounted.current) {
+        navigate("/");
+      }
     } catch (err) {
-      setError(err.response?.data?.error || "Something went wrong.");
-      setPassword("");
+      if (isMounted.current) {
+        setError(err.response?.data?.error || "Something went wrong.");
+        setPassword("");
+      }
     } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter" && !loading) {
+      handleLogin();
     }
   };
 
@@ -62,7 +69,7 @@ function LoginAdmin() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
         <div className="bg-red-100 rounded-lg p-8 shadow-sm">
-          <div className="flex justify-center items-center">
+          <div className="flex justify-center items-center mb-6">
             <img src="/contain/Text.svg" alt="admin_panel" />
           </div>
 
@@ -84,8 +91,10 @@ function LoginAdmin() {
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onKeyPress={handleKeyPress}
                 className="w-full px-3 py-2 border rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
                 disabled={loading}
+                autoComplete="email"
               />
             </div>
 
@@ -102,13 +111,17 @@ function LoginAdmin() {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onKeyPress={handleKeyPress}
                 className="w-full px-3 py-2 border rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
                 disabled={loading}
+                autoComplete="current-password"
               />
             </div>
 
             {error && (
-              <div className="text-red-600 text-sm text-center">{error}</div>
+              <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-md">
+                {error}
+              </div>
             )}
 
             <div>

@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { Bell } from "lucide-react";
-import { supabase } from "@/supabaseClient";
+import { getSupabase } from "@/supabaseClient";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 function NotificationBell({ currentUserId }) {
   const [notifications, setNotifications] = useState([]);
@@ -17,6 +20,7 @@ function NotificationBell({ currentUserId }) {
     if (!currentUserId) return;
 
     const fetchNotifications = async () => {
+      const supabase = getSupabase();
       const { data, error } = await supabase
         .from("notifications")
         .select(
@@ -48,6 +52,7 @@ function NotificationBell({ currentUserId }) {
   useEffect(() => {
     if (!currentUserId) return;
 
+    const supabase = getSupabase();
     const channel = supabase
       .channel(`notifications:${currentUserId}`)
       .on(
@@ -111,6 +116,7 @@ function NotificationBell({ currentUserId }) {
 
   // Mark single notification as Read
   const markAsRead = async (id) => {
+    const supabase = getSupabase();
     await supabase.from("notifications").update({ is_read: true }).eq("id", id);
 
     setNotifications((prev) =>
@@ -120,6 +126,7 @@ function NotificationBell({ currentUserId }) {
 
   // Delete Notification
   const deleteNotification = async (id) => {
+    const supabase = getSupabase();
     await supabase
       .from("notifications")
       .update({ is_deleted: true })
@@ -138,9 +145,6 @@ function NotificationBell({ currentUserId }) {
   };
 
   // Format time
-  dayjs.extend(utc);
-  dayjs.extend(timezone);
-
   const formatTime = (timestamp) => {
     const date = dayjs.utc(timestamp).tz("Asia/Bangkok");
     const now = dayjs().tz("Asia/Bangkok");
@@ -160,6 +164,7 @@ function NotificationBell({ currentUserId }) {
   const markAllAsRead = async () => {
     if (notifications.length === 0) return;
 
+    const supabase = getSupabase();
     await supabase
       .from("notifications")
       .update({ is_read: true })

@@ -113,7 +113,7 @@ function BlogCard({ category, keyword }) {
                   className="flex items-center gap-3 border-t border-gray-200 pt-4 mt-2"
                 >
                   <img
-                    src="/herosection.png"
+                    src={item.profile_pic}
                     alt="logo"
                     className="w-8 h-8 rounded-full"
                   />

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ChevronDown,
@@ -7,29 +7,40 @@ import {
   RotateCw,
   UserPen,
 } from "lucide-react";
-import axios from "axios";
 import NotificationBell from "./notification";
-import { supabase } from "@/supabaseClient";
 import { useAuth } from "@/context/authentication";
+
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
 
 function NavBar() {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdown, setDropdown] = useState(false);
+  const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  // ใช้ context แทนการเช็ค localStorage เอง
-  const { state, logout, fetchUser, isAuthenticated } = useAuth();
+  const { state, logout, isAuthenticated } = useAuth();
   const user = state?.user;
 
-  // ถ้าต้องการ รีเฟรชข้อมูลเมื่อเมนูเปิดขึ้น (optional)
-  const handleProfileClick = async () => {
-    setDropdown((s) => !s);
-    if (isAuthenticated && !user) {
-      // กรณี race: พยายามดึง user ซ้ำจาก context
-      await fetchUser();
+  // ปิด dropdown เมื่อคลิกข้างนอก
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdown(false);
+      }
+    };
+
+    if (dropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
     }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdown]);
+
+  const handleProfileClick = () => {
+    setDropdown((s) => !s);
   };
 
   async function handleLogout() {
@@ -40,6 +51,10 @@ function NavBar() {
 
   const handleMobileClose = () => {
     setIsOpen(false);
+  };
+
+  const handleDropdownItemClick = () => {
+    setDropdown(false);
   };
 
   return (
@@ -54,18 +69,18 @@ function NavBar() {
           {user?.id && <NotificationBell currentUserId={user.id} />}
 
           {/* User Profile Dropdown - Desktop */}
-          <div className="hidden md:block">
+          <div className="hidden md:block relative" ref={dropdownRef}>
             <button
               className="flex flex-row gap-[12px] justify-center items-center hover:cursor-pointer"
               type="button"
               onClick={handleProfileClick}
             >
               <img
-                src={user?.profilePic || "/default-profile.jpg"}
+                src={user?.profile_pic || "/default-profile.jpg"}
                 alt="image-profile"
                 className="w-10 h-10 rounded-full object-cover border"
               />
-              <p className="text-sm">{user?.name || "User"}</p>
+              <p className="text-sm">{user?.username || user?.email || "User"}</p>
               <ChevronDown
                 className={`transition-transform ${
                   dropdown ? "rotate-180" : ""
@@ -74,38 +89,43 @@ function NavBar() {
             </button>
 
             {dropdown && (
-              <div className="absolute right-20 mt-2 w-[200px] bg-white rounded-md shadow-lg z-10 py-2 border">
+              <div className="absolute right-0 mt-2 w-[200px] bg-white rounded-md shadow-lg z-10 py-2 border">
                 <Link
                   to="/profile"
                   state={{ category: "Profile" }}
-                  className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex flex-row gap-1"
+                  className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex flex-row gap-2 items-center"
+                  onClick={handleDropdownItemClick}
                 >
-                  <UserPen />
+                  <UserPen size={18} />
                   <p>Profile</p>
                 </Link>
 
                 <Link
                   to="/profile"
-                  className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex flex-row gap-1 hover:cursor-pointer"
+                  className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex flex-row gap-2 items-center hover:cursor-pointer"
                   state={{ category: "Reset password" }}
+                  onClick={handleDropdownItemClick}
                 >
-                  <RotateCw />
+                  <RotateCw size={18} />
                   <p>Reset password</p>
                 </Link>
 
-                <Link
-                  to={"/"}
-                  className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex flex-row gap-1 hover:cursor-pointer"
-                >
-                  <CircleArrowOutUpRight />
-                  <p>Admin</p>
-                </Link>
+                {user?.role === "admin" && (
+                  <Link
+                    to={"/admin"}
+                    className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex flex-row gap-2 items-center hover:cursor-pointer"
+                    onClick={handleDropdownItemClick}
+                  >
+                    <CircleArrowOutUpRight size={18} />
+                    <p>Admin</p>
+                  </Link>
+                )}
 
                 <button
-                  className="w-full text-left px-4 py-2 text-sm text-gray-500 flex flex-row gap-1 hover:bg-gray-100"
+                  className="w-full text-left px-4 py-2 text-sm text-gray-500 flex flex-row gap-2 items-center hover:bg-gray-100"
                   onClick={handleLogout}
                 >
-                  <LogOut />
+                  <LogOut size={18} />
                   <p>Logout</p>
                 </button>
               </div>
@@ -143,7 +163,7 @@ function NavBar() {
             <Link to={"/login"}>
               <button
                 type="button"
-                className="w-[120px] h-[40px] bg-white border-2 border-gray-400 rounded-4xl flex justify-center items-center hover:cursor-pointer hover:bg-black hover:text-white"
+                className="w-[120px] h-[40px] bg-white border-2 border-gray-400 rounded-4xl flex justify-center items-center hover:cursor-pointer hover:bg-black hover:text-white transition-colors"
               >
                 Login
               </button>
@@ -151,7 +171,7 @@ function NavBar() {
             <Link to={"/SignUp"}>
               <button
                 type="button"
-                className="w-[120px] h-[40px] bg-black text-white rounded-4xl flex justify-center items-center hover:cursor-pointer hover:bg-white hover:border-2 hover:border-gray-400 hover:text-black"
+                className="w-[120px] h-[40px] bg-black text-white rounded-4xl flex justify-center items-center hover:cursor-pointer hover:bg-white hover:border-2 hover:border-gray-400 hover:text-black transition-colors"
               >
                 Sign up
               </button>
@@ -189,7 +209,7 @@ function NavBar() {
                 onClick={handleMobileClose}
                 className="w-[80%]"
               >
-                <button className="w-full h-[40px] bg-white border-2 border-gray-400 rounded-4xl flex justify-center items-center hover:bg-black hover:text-white">
+                <button className="w-full h-[40px] bg-white border-2 border-gray-400 rounded-4xl flex justify-center items-center hover:bg-black hover:text-white transition-colors">
                   Login
                 </button>
               </Link>
@@ -198,7 +218,7 @@ function NavBar() {
                 onClick={handleMobileClose}
                 className="w-[80%]"
               >
-                <button className="w-full h-[40px] bg-black text-white rounded-4xl flex justify-center items-center hover:bg-white hover:border-2 hover:border-gray-400 hover:text-black">
+                <button className="w-full h-[40px] bg-black text-white rounded-4xl flex justify-center items-center hover:bg-white hover:border-2 hover:border-gray-400 hover:text-black transition-colors">
                   Sign up
                 </button>
               </Link>
@@ -212,11 +232,11 @@ function NavBar() {
         <div className="absolute top-[60px] left-0 w-full bg-white flex flex-col items-start gap-2 py-4 border-b-2 border-gray-200 md:hidden">
           <div className="w-full px-4 py-2 flex items-center gap-3">
             <img
-              src={user?.profilePic || "/default-profile.jpg"}
+              src={user?.profile_pic || "/default-profile.jpg"}
               alt="image-profile"
               className="w-10 h-10 rounded-full object-cover border"
             />
-            <p className="text-sm font-medium">{user?.name || "User"}</p>
+            <p className="text-sm font-medium">{user?.username || user?.email || "User"}</p>
           </div>
           <Link
             to="/profile"
@@ -238,14 +258,16 @@ function NavBar() {
             <p>Reset password</p>
           </Link>
 
-          <Link
-            to={"/"}
-            className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex flex-row gap-2 items-center"
-            onClick={handleMobileClose}
-          >
-            <CircleArrowOutUpRight size={18} />
-            <p>Admin</p>
-          </Link>
+          {user?.role === "admin" && (
+            <Link
+              to={"/admin"}
+              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex flex-row gap-2 items-center"
+              onClick={handleMobileClose}
+            >
+              <CircleArrowOutUpRight size={18} />
+              <p>Admin</p>
+            </Link>
+          )}
 
           <button
             className="w-full text-left px-4 py-2 text-sm text-gray-500 flex flex-row gap-2 items-center hover:bg-gray-100"
