@@ -1,7 +1,8 @@
 
-import Footer from "@/component/Footer";
-import NarBar from "@/component/narbar";
-import ViewPost from "@/component/View-Post-com";
+
+import Footer from "@/component/footer.jsx";
+import NarBar from "@/component/narbar.jsx";
+import ViewPost from "@/component/View-Post-com.jsx";
 
 
 export default function ViewPostPage() {
