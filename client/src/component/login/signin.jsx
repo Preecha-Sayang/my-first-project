@@ -1,7 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
+
 export default function SignupForm() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     username: "",
@@ -9,11 +13,7 @@ export default function SignupForm() {
     password: "",
   });
 
-  const [errors, setErrors] = useState({
-    email: "Email must be a valid email",
-    password: "Password must be at least 6 characters"
-  });
-
+  const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
@@ -23,11 +23,11 @@ export default function SignupForm() {
       [id]: value,
     }));
 
-    // Clear errors when user starts typing
+    // Clear error for that field
     if (errors[id]) {
       setErrors((prev) => ({
         ...prev,
-        [id]: ""
+        [id]: "",
       }));
     }
   };
@@ -36,13 +36,14 @@ export default function SignupForm() {
     const newErrors = {};
     const { name, username, email, password } = formData;
 
-    // ตรวจสอบอีเมล
+    if (!name.trim()) newErrors.name = "Name is required";
+    if (!username.trim()) newErrors.username = "Username is required";
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       newErrors.email = "Email must be a valid email";
     }
 
-    // ตรวจสอบรหัสผ่าน
     if (password.length < 6) {
       newErrors.password = "Password must be at least 6 characters";
     }
@@ -51,9 +52,15 @@ export default function SignupForm() {
     return Object.keys(newErrors).length === 0;
   };
 
-
-  const handleSubmit = async () => {
-  if (!validateForm()) return;
+ const handleSubmit = async () => {
+  if (!validateForm()) {
+    Swal.fire({
+      icon: "error",
+      title: "Invalid Input",
+      text: "Please check your information.",
+    });
+    return;
+  }
 
   setIsSubmitting(true);
 
@@ -72,7 +79,14 @@ export default function SignupForm() {
       throw new Error(data.error || "Registration failed");
     }
 
-    alert(`✅ Sign up successful! Welcome, ${data.user.name || data.user.username}!`);
+    // ✅ สมัครสำเร็จ
+    Swal.fire({
+      icon: "success",
+      title: "Sign up successful!",
+      showConfirmButton: "#d33",
+    });
+      navigate("/login");
+
 
     setFormData({
       name: "",
@@ -82,20 +96,40 @@ export default function SignupForm() {
     });
     setErrors({});
   } catch (err) {
-    alert(`❌ Sign up failed: ${err.message}`);
+    // 🛑 แสดง error ใต้ช่อง Username
+    if (err.message === "This username is already taken") {
+      setErrors((prev) => ({
+        ...prev,
+        username: "This username is already taken",
+      }));
+    } else if(err.message === "User with this email already exists") {
+      setErrors((prev) => ({
+        ...prev,
+        email: "User with this email already exists",
+      }));
+    }
+    else {
+        Swal.fire({
+        icon: "error",
+        title: "Sign up failed",
+        text: err.message,
+      }
+      )};
   } finally {
     setIsSubmitting(false);
   }
 };
 
+
   return (
     <div className="bg-gray-100 min-h-screen flex items-center justify-center p-5 mt-[100px]">
       <div className="bg-gray-200 p-8 rounded-lg w-[80%] text-center shadow-lg">
         <h1 className="text-3xl font-bold text-gray-800 mb-8">Sign up</h1>
-        
+
         <div className="space-y-4">
+          {/* NAME */}
           <div className="text-left">
-            <label htmlFor="name" className="block text-sm font-medium text-gray-600 mb-2">
+            <label className="block text-sm font-medium text-gray-600 mb-2">
               Name
             </label>
             <input
@@ -103,12 +137,16 @@ export default function SignupForm() {
               id="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full px-4 py-3 bg-white rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-4 py-3 bg-white rounded-md ${
+                errors.name ? "border-2 border-red-500" : ""
+              }`}
             />
+            {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
           </div>
 
+          {/* USERNAME */}
           <div className="text-left">
-            <label htmlFor="username" className="block text-sm font-medium text-gray-600 mb-2">
+            <label className="block text-sm font-medium text-gray-600 mb-2">
               Username
             </label>
             <input
@@ -116,12 +154,16 @@ export default function SignupForm() {
               id="username"
               value={formData.username}
               onChange={handleChange}
-              className="w-full px-4 py-3 bg-white rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-4 py-3 bg-white rounded-md ${
+                errors.username ? "border-2 border-red-500" : ""
+              }`}
             />
+            {errors.username && <p className="text-red-500 text-sm">{errors.username}</p>}
           </div>
 
+          {/* EMAIL */}
           <div className="text-left">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-600 mb-2">
+            <label className="block text-sm font-medium text-gray-600 mb-2">
               Email
             </label>
             <input
@@ -129,17 +171,16 @@ export default function SignupForm() {
               id="email"
               value={formData.email}
               onChange={handleChange}
-              className={`w-full px-4 py-3 bg-white rounded-md text-gray-800 focus:outline-none focus:ring-2 ${
-                errors.email ? 'border-2 border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
+              className={`w-full px-4 py-3 bg-white rounded-md ${
+                errors.email ? "border-2 border-red-500" : ""
               }`}
             />
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-            )}
+            {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
           </div>
 
+          {/* PASSWORD */}
           <div className="text-left">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-600 mb-2">
+            <label className="block text-sm font-medium text-gray-600 mb-2">
               Password
             </label>
             <input
@@ -147,13 +188,11 @@ export default function SignupForm() {
               id="password"
               value={formData.password}
               onChange={handleChange}
-              className={`w-full px-4 py-3 bg-white rounded-md text-gray-800 focus:outline-none focus:ring-2 ${
-                errors.password ? 'border-2 border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
+              className={`w-full px-4 py-3 bg-white rounded-md ${
+                errors.password ? "border-2 border-red-500" : ""
               }`}
             />
-            {errors.password && (
-              <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-            )}
+            {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
           </div>
 
           <button
@@ -161,21 +200,11 @@ export default function SignupForm() {
             disabled={isSubmitting}
             className={`w-full px-6 py-3 rounded-full font-medium transition-colors mt-6 ${
               isSubmitting
-                ? "bg-gray-500 cursor-not-allowed text-white"
+                ? "bg-gray-500 cursor-not-allowed"
                 : "bg-gray-800 text-white hover:bg-gray-700"
             }`}
           >
             {isSubmitting ? "Signing up..." : "Sign up"}
-          </button>
-        </div>
-
-        <div className="mt-6 text-sm text-gray-600">
-          Already have an account?{" "}
-          <button
-            type="button"
-            className="text-gray-800 underline font-medium hover:text-blue-600"
-          >
-            Log in
           </button>
         </div>
       </div>

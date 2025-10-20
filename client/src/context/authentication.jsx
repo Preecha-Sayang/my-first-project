@@ -98,6 +98,41 @@ function AuthProvider(props) {
     }
   };
 
+   // 🛡 Login เฉพาะ Admin
+  const loginAdmin = async ({ email, password }) => {
+    try {
+      setState((prev) => ({
+        ...prev,
+        loading: true,
+        error: null,
+        getUserLoading: true,
+      }));
+
+      const response = await axios.post(`${API_URL}/auth/admin/login`, {
+        email,
+        password,
+      });
+
+      const token = response.data.access_token;
+      localStorage.setItem("token", token);
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+      await fetchUser();
+      setState((prev) => ({ ...prev, loading: false, error: null }));
+      navigate("/"); // ไปหน้า Home หรือ /admin/dashboard ก็ได้
+
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        loading: false,
+        getUserLoading: false,
+        error: error.response?.data?.error || "Login failed",
+      }));
+      return { error: error.response?.data?.error || "Login failed" };
+    }
+  };
+
+
   // ลงทะเบียนผู้ใช้
   const register = async (data) => {
     try {
@@ -134,6 +169,7 @@ function AuthProvider(props) {
         state,
         login,
         logout,
+        loginAdmin,
         register,
         isAuthenticated,
         fetchUser,

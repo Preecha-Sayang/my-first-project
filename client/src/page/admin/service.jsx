@@ -7,6 +7,8 @@ import CreateCatrgory from "./service/categorycreate";
 import ProfileAdmin from "./service/profileadmin";
 import AdminResetPassword from "./service/adminresetpassword";
 import NotificationRealtime from "./service/noctification";
+import { useAuth } from "@/context/authentication";
+import { Link } from "react-router-dom";
 
 const menuitem = [
   { label: "Article management", img: "/contain/notebook_light.svg" },
@@ -21,6 +23,10 @@ function AdminService() {
   const [isCreatingArticle, setIsCreatingArticle] = useState(false);
   const [editingPostId, setEditingPostId] = useState(false);
   const [Category, setisCategories] = useState(false);
+
+    const {logout } = useAuth();
+
+
   const renderContent = () => {
     if (isCreatingArticle) {
       return <CreateArticle onCancel={() => setIsCreatingArticle(false)} />;
@@ -50,6 +56,14 @@ function AdminService() {
         return <p>ไม่มีหน้าที่ต้องการ</p>;
     }
   };
+
+
+    async function handleLogout() {
+    logout();
+    navigate("/");
+  }
+
+
 
   return (
     <div className="flex flex-row">
@@ -98,10 +112,14 @@ function AdminService() {
               alt="Out_light"
               className="w-5 h-5"
             />
+            <Link to={`/`}>
             <p className="text-sm font-medium text-gray-800">hh. website</p>
+            </Link>
           </div>
           <div className="border-b border-gray-400 mb-3"></div>
-          <div className="flex items-center gap-3 cursor-pointer hover:opacity-80">
+          <div className="flex items-center gap-3 cursor-pointer hover:opacity-80"
+          onClick={handleLogout}
+          >
             <img src="/contain/logout.svg" alt="logout" className="w-5 h-5" />
             <p className="text-sm font-medium text-red-600">Log out</p>
           </div>

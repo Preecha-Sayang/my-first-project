@@ -1,57 +1,89 @@
 import { useState } from "react";
 import { useAuth } from "@/context/authentication";
+import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
 
-export default function LoginPage() {
+export default function UserLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isErrorEmail, setIsErrorEmail] = useState(false);
   const [isErrorPassword, setIsErrorPassword] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false); // เพิ่ม loading state
+  const [loading, setLoading] = useState(false);
 
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async () => {
     let valid = true;
 
     if (!email.trim()) {
-      setIsErrorEmail(true);
-      valid = false;
-    } else {
-      setIsErrorEmail(false);
+      setIsErrorEmail("กรุณากรอกอีเมล");
+      Swal.fire({ icon: "error", title: "อีเมลไม่ถูกต้อง", text: "กรุณากรอกอีเมลของคุณ" });
+      return;
+    }
+    if (!password.trim()) {
+      setIsErrorPassword("กรุณากรอกรหัสผ่าน");
+      Swal.fire({ icon: "error", title: "รหัสผ่านว่าง", text: "กรุณากรอกรหัสผ่าน" });
+      return;
     }
 
-    if (!password.trim()) {
-      setIsErrorPassword(true);
-      valid = false;
-    } else {
-      setIsErrorPassword(false);
-    }
 
     if (!valid) return;
 
     try {
       setError("");
-      setLoading(true); // เริ่ม loading
+      setLoading(true);
+
       const result = await login({ email, password });
-      
+
       if (result && result.error) {
-        setError(result.error);
+        Swal.fire({
+          icon: "error",
+          title: "Login Failed",
+          text: result.error,
+          confirmButtonColor: "#d33",
+        });
+      } else {
+        Swal.fire({
+          icon: "success",
+          title: "เข้าสู่ระบบสำเร็จ",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+        navigate("/"); // ✅ เปลี่ยนเส้นทางหลัง Login
       }
     } catch (err) {
       setError(err?.message || "Login failed");
+
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: err?.message || "Something went wrong",
+      });
     } finally {
-      setLoading(false); // สิ้นสุด loading
+      setLoading(false);
     }
   };
 
-  // เพิ่ม Enter key support
+  // Enter Key
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !loading) {
       handleSubmit();
     }
+  };
+
+  // ล้าง Error
+  const clearEmailError = () => {
+    setIsErrorEmail(false);
+    setError("");
+  };
+
+  const clearPasswordError = () => {
+    setIsErrorPassword(false);
+    setError("");
   };
 
   return (
@@ -59,7 +91,7 @@ export default function LoginPage() {
       <div className="max-w-md w-full">
         <div className="bg-gray-200 rounded-lg p-8 shadow-sm">
           <h2 className="text-2xl font-medium text-center mb-8 text-gray-800">
-            Log in
+            User Login
           </h2>
 
           {error && (
@@ -69,21 +101,22 @@ export default function LoginPage() {
           )}
 
           <div className="space-y-6">
+            {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm text-gray-600 mb-2">
+              <label className="block text-sm text-gray-600 mb-2">
                 Email
               </label>
               <input
-                id="email"
                 type="email"
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                onKeyPress={handleKeyPress} // เพิ่ม Enter support
-                className={`w-full px-3 py-2 border rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 ${
+                onFocus={clearEmailError}
+                onKeyDown={handleKeyPress}
+                className={`w-full px-3 py-2 border rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-400 ${
                   isErrorEmail ? "border-red-500" : "border-gray-300"
                 }`}
-                disabled={loading} // Disable ตอน loading
+                disabled={loading}
                 autoComplete="email"
               />
               {isErrorEmail && (
@@ -93,21 +126,22 @@ export default function LoginPage() {
               )}
             </div>
 
+            {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm text-gray-600 mb-2">
+              <label className="block text-sm text-gray-600 mb-2">
                 Password
               </label>
               <input
-                id="password"
                 type="password"
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                onKeyPress={handleKeyPress} // เพิ่ม Enter support
-                className={`w-full px-3 py-2 border rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 ${
+                onFocus={clearPasswordError}
+                onKeyDown={handleKeyPress}
+                className={`w-full px-3 py-2 border rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-400 ${
                   isErrorPassword ? "border-red-500" : "border-gray-300"
                 }`}
-                disabled={loading} // Disable ตอน loading
+                disabled={loading}
                 autoComplete="current-password"
               />
               {isErrorPassword && (
@@ -117,6 +151,7 @@ export default function LoginPage() {
               )}
             </div>
 
+            {/* Submit Button */}
             <div>
               <button
                 onClick={handleSubmit}
@@ -125,7 +160,7 @@ export default function LoginPage() {
                     ? "opacity-50 cursor-not-allowed"
                     : "hover:bg-gray-700"
                 }`}
-                disabled={loading} // Disable ตอน loading
+                disabled={loading}
               >
                 {loading ? "Logging in..." : "Log in"}
               </button>

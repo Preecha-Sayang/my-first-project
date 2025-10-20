@@ -14,6 +14,10 @@ import {
 } from "lucide-react";
 
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+
+
+
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
 
 export default function ViewPost() {
@@ -30,6 +34,8 @@ export default function ViewPost() {
   const [comments, setComments] = useState([]);
   const [commentsPagination, setCommentsPagination] = useState(null);
   const [admin, setAdmin] = useState(null);
+
+   const navigate = useNavigate();
 
 
   async function fetchdata(pageNumber = 1, append = false) {
@@ -348,12 +354,16 @@ export default function ViewPost() {
               <h2 className="text-xl font-bold mb-4">
                 Create an account to continue
               </h2>
-              <button className="px-6 py-2 bg-black text-white rounded-full mb-4">
+              <button className="px-6 py-2 bg-black text-white rounded-full mb-4 cursor-pointer"
+              onClick={() => navigate("/SignUp")}
+              >
                 Create account
               </button>
               <p className="text-sm text-gray-500">
                 Already have an account?{" "}
-                <span className="underline cursor-pointer">Log in</span>
+                <span className="underline cursor-pointer"
+                onClick={() => navigate("/login")}
+                >Log in</span>
               </p>
             </div>
           </div>

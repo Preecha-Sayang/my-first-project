@@ -13,10 +13,11 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
 function Search({ category, setCategory, keyword, setKeyword }) {
   const [isOpen, setIsOpen] = useState(true);
   const filterbar = ["Highlight", "Cat", "Inspiration", "General"];
-  const [inputValue, setInputValue] = useState(""); // <-- state ของ input
+  const [inputValue, setInputValue] = useState(""); // state ของ input
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
+  // 🔍 Debounce & Fetch Suggestions
   useEffect(() => {
     if (!inputValue.trim()) {
       setSuggestions([]);
@@ -38,9 +39,10 @@ function Search({ category, setCategory, keyword, setKeyword }) {
     return () => clearTimeout(handler);
   }, [inputValue]);
 
+  // ✋ เลือกรายการจาก Suggestions
   const handleSelect = (item) => {
-    setKeyword(item.title); // ส่งค่าไปให้ BlogCard (ใช้ค้นหา)
-    setInputValue(""); // ล้าง input
+    setKeyword(item.title);
+    setInputValue(item.title);
     setShowSuggestions(false);
   };
 
@@ -52,46 +54,60 @@ function Search({ category, setCategory, keyword, setKeyword }) {
           <h1 className="pl-[20px] md:h-1/2 !text-3xl md:!text-4xl !font-bold ">
             Latest articles
           </h1>
+
           {/* Desktop */}
           <div className="h-1/2 hidden flex-row justify-between items-center px-[40px] bg-gray-100 rounded-3xl md:flex">
             <div className="flex flex-row gap-[20px]">
               {filterbar.map((item, i) => (
                 <button
                   key={i}
-                  className={`px-4 py-2 rounded-xl text-gray-600  text-2xl  
+                  className={`px-4 py-2 rounded-xl text-gray-600 text-2xl  
                   ${
                     category === item
                       ? "bg-gray-300 text-black font-bold"
                       : "hover:bg-gray-300 transition hover:cursor-pointer"
-                  }
-                  `}
+                  }`}
                   disabled={category === item}
                   value={item}
-                  onClick={() => setCategory(item)}
+                  onClick={() => {
+                    setCategory(item);
+                    setKeyword(""); // เปลี่ยนหมวด → ล้างค้นหา
+                    setInputValue("");
+                  }}
                 >
                   {item}
                 </button>
               ))}
             </div>
 
+            {/* Search Input */}
             <div className="relative flex items-center bg-white px-4 py-2 rounded-xl shadow-sm w-[250px]">
               <input
                 type="text"
                 placeholder="Search"
                 className="flex-1 outline-none bg-transparent text-gray-700"
-                value={inputValue} // <-- ใช้ inputValue
+                value={inputValue}
                 onChange={(e) => {
                   const value = e.target.value;
                   setInputValue(value);
 
-                  // ✅ ถ้าลบจนว่าง ก็ล้าง keyword เพื่อให้แสดงโพสต์ทั้งหมด
+                  // 🧹 ถ้าลบหมด → แสดงโพสต์ทั้งหมด
                   if (value.trim() === "") {
                     setKeyword("");
+                    setSuggestions([]);
+                    setShowSuggestions(false);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    setKeyword(inputValue.trim());
+                    setShowSuggestions(false);
                   }
                 }}
               />
-
               <SearchIcon className="w-4 h-4 text-gray-400" />
+
+              {/* Dropdown Suggestions */}
               {showSuggestions && suggestions.length > 0 && (
                 <ul className="absolute top-[110%] left-0 w-full bg-white shadow-lg rounded-lg overflow-hidden z-20">
                   {suggestions.map((item, i) => (

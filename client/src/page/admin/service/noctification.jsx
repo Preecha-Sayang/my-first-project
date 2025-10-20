@@ -22,96 +22,64 @@ function NotificationPage() {
   const currentUser = state.user;
   const loading = state.getUserLoading;
 
-  // โหลดแจ้งเตือน
-  useEffect(() => {
-    if (!currentUser) return;
-    const fetchNotifications = async () => {
-      console.log('🔍 Fetching notifications for user:', currentUser.id);
-      
-      const supabase = getSupabase();
-      const { data, error } = await supabase
-        .from("notifications")
-        .select(
-          `
-            id, user_id, type, title, message, post_id, is_read, created_at,
-            actor:actor_id (
-              username,
-              profile_pic
-            )
-          `
-        )
-        .eq("user_id", currentUser.id)
-        .eq("is_deleted", false)
-        .order("created_at", { ascending: false });
-      
-      if (error) {
-        console.error('❌ Error fetching notifications:', error);
-      } else {
-        console.log('✅ Notifications loaded:', data?.length || 0);
-        setNotifications(data || []);
-      }
-    };
-    
-    fetchNotifications();
-  }, [currentUser]);
+ useEffect(() => {
+  if (!currentUser) return;
 
-  // Real-Time Subscription
-  useEffect(() => {
-    if (!currentUser) return;
-    
-    console.log('🔔 Setting up real-time subscription for user:', currentUser.id);
-    
-    const supabase = getSupabase();
-    const channel = supabase
-      .channel(`notifications:${currentUser.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "notifications",
-          filter: `user_id=eq.${currentUser.id}`,
-        },
-        (payload) => {
-          console.log('📨 Real-time event:', payload.eventType);
-          
-          const { eventType, new: newData, old: oldData } = payload;
-          
-          if (eventType === "INSERT") {
-            console.log('➕ New notification:', newData);
-            setNotifications((prev) => [newData, ...prev]);
-            setPage(1);
-          }
-          
-          if (eventType === "UPDATE") {
-            console.log('🔄 Updated notification:', newData);
-            if (newData.is_deleted) {
-              setNotifications((prev) =>
-                prev.filter((n) => n.id !== newData.id)
-              );
-            } else {
-              setNotifications((prev) =>
-                prev.map((n) => (n.id === newData.id ? newData : n))
-              );
-            }
-          }
-          
-          if (eventType === "DELETE") {
-            console.log('🗑️ Deleted notification:', oldData);
-            setNotifications((prev) => prev.filter((n) => n.id !== oldData.id));
+  console.log('🔔 Setting up real-time subscription for user:', currentUser.id);
+
+  const supabase = getSupabase();
+  const channel = supabase
+    .channel(`notifications:${currentUser.id}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "notifications",
+        filter: `user_id=eq.${currentUser.id}`,
+      },
+      (payload) => {
+        console.log('📨 Real-time event:', payload.eventType);
+
+        const { eventType, new: newData, old: oldData } = payload;
+
+        if (eventType === "INSERT") {
+          setNotifications((prev) => [
+            { ...newData, actor: newData.actor || {} },
+            ...prev
+          ]);
+          setPage(1);
+        }
+
+        if (eventType === "UPDATE") {
+          if (newData.is_deleted) {
+            setNotifications((prev) => prev.filter((n) => n.id !== newData.id));
+          } else {
+            setNotifications((prev) =>
+              prev.map((n) => (n.id === newData.id ? { ...newData, actor: newData.actor || {} } : n))
+            );
           }
         }
-      )
-      .subscribe((status) => {
-        console.log('🔌 Subscription status:', status);
-      });
 
-    return () => {
-      console.log('🔌 Cleaning up subscription');
+        if (eventType === "DELETE") {
+          setNotifications((prev) => prev.filter((n) => n.id !== oldData.id));
+        }
+      }
+    )
+    .subscribe((status) => {
+      console.log('🔌 Subscription status:', status);
+    });
+
+  return () => {
+    console.log('🛑 Cleaning up subscription');
+    try {
       const supabase = getSupabase();
-      supabase.removeChannel(channel);
-    };
-  }, [currentUser]);
+      if (channel) supabase.removeChannel(channel);
+    } catch (error) {
+      console.warn('⚠️ Failed to remove channel safely:', error);
+    }
+  };
+}, [currentUser]);
 
   // เปิดแจ้งเตือน + ไปหน้าโพสต์
   const handleOpenNotification = async (notif) => {

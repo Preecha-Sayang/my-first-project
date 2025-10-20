@@ -10,7 +10,6 @@ import {
 import NotificationBell from "./notification";
 import { useAuth } from "@/context/authentication";
 
-
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
 
 function NavBar() {
@@ -76,11 +75,13 @@ function NavBar() {
               onClick={handleProfileClick}
             >
               <img
-                src={user?.profile_pic || "/default-profile.jpg"}
+                src={user?.profilePic || "/default-profile.jpg"}
                 alt="image-profile"
                 className="w-10 h-10 rounded-full object-cover border"
               />
-              <p className="text-sm">{user?.username || user?.email || "User"}</p>
+              <p className="text-sm">
+                {user?.username || user?.email || "User"}
+              </p>
               <ChevronDown
                 className={`transition-transform ${
                   dropdown ? "rotate-180" : ""
@@ -112,7 +113,7 @@ function NavBar() {
 
                 {user?.role === "admin" && (
                   <Link
-                    to={"/admin"}
+                    to={"/admin/service"}
                     className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex flex-row gap-2 items-center hover:cursor-pointer"
                     onClick={handleDropdownItemClick}
                   >
@@ -236,7 +237,9 @@ function NavBar() {
               alt="image-profile"
               className="w-10 h-10 rounded-full object-cover border"
             />
-            <p className="text-sm font-medium">{user?.username || user?.email || "User"}</p>
+            <p className="text-sm font-medium">
+              {user?.username || user?.email || "User"}
+            </p>
           </div>
           <Link
             to="/profile"
