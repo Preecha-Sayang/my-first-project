@@ -74,7 +74,7 @@ postRouter.get("/", async (req, res) => {
 
     // 3) เขียน Query เพื่อ Insert ข้อมูลโพสต์ ด้วย Connection Pool
     let query = `
-        SELECT posts.id, posts.image, categories.name AS category, posts.title, posts.description, posts.date, posts.content, statuses.status, posts.likes_count, users.name
+        SELECT posts.id, posts.image, categories.name AS category, posts.title, posts.description, posts.date, posts.content, statuses.status, posts.likes_count, users.name, users.profile_pic
         FROM posts
         INNER JOIN categories ON posts.category_id = categories.id
         INNER JOIN statuses ON posts.status_id = statuses.id
