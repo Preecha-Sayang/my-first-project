@@ -2,7 +2,7 @@ import axios from "axios";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
+const API_URL = import.meta.env.VITE_API_URL ;
 
 function BlogCard({ category, keyword }) {
   const [data, setData] = useState([]);
@@ -87,6 +87,7 @@ function BlogCard({ category, keyword }) {
       <ul className="grid grid-cols-1 md:grid-cols-2 md:gap-8 list-none p-0 w-full md:w-[70%]">
         {data.map((item, index) => {
           return (
+            <Link to={`/post/${item.id}`}>
             <li key={index}>
               <div
                 id="blogcard"
@@ -140,6 +141,7 @@ function BlogCard({ category, keyword }) {
                 </div>
               </div>
             </li>
+            </Link>
           );
         })}
       </ul>

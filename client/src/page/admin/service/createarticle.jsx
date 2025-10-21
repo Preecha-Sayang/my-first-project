@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { AwardIcon, Upload, X } from "lucide-react";
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
+const API_URL = import.meta.env.VITE_API_URL ;
 
 export default function CreateArticle() {
 

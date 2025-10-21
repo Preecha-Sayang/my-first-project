@@ -3,7 +3,7 @@ import axios from "axios";
 import { Search, Edit2, Trash2 } from "lucide-react";
 
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
+const API_URL = import.meta.env.VITE_API_URL ;
 
 export default function ArticleManagement({ setIsCreatingArticle, setEditingPostId }) {
   const [articles, setArticles] = useState([]);
