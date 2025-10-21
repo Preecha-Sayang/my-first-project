@@ -18,7 +18,7 @@ import { useNavigate } from "react-router-dom";
 
 
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
+const API_URL = import.meta.env.VITE_API_URL ;
 
 export default function ViewPost() {
   const { postId } = useParams();
@@ -213,7 +213,7 @@ export default function ViewPost() {
                 }}
                 className="w-[100px] p-[10px] bg-white border rounded-3xl flex flex-row gap-[10px]"
               >
-                <Copy />
+                <Copy className="hover:cursor-pointer"/>
                 Copy
               </button>
 

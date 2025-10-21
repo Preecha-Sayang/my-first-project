@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useState } from "react";
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
+const API_URL = import.meta.env.VITE_API_URL ;
 
 function CreateCatrgory() {
   const [cat, iscat] = useState("");

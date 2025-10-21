@@ -3,7 +3,7 @@ import axios from "axios";
 
 
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4001";
+const API_URL = import.meta.env.VITE_API_URL ;
 
 function ProfileAdmin() {
   const [previewUrl, setPreviewUrl] = useState(null); // ลิงก์ preview รูปที่เลือก
