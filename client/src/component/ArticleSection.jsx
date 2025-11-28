@@ -32,7 +32,8 @@ function BlogCard({ category, keyword }) {
   useEffect(() => {
     async function fetchdata() {
       try {
-        const categoryParam = category === "Highlight" ? "" : category;
+        setIsLoading(true); // ตั้ง loading ที่จุดเริ่มต้น
+        const categoryParam = category.toLowerCase() === "highlight" ? "" : category;
         const result = await axios.get(`${API_URL}/posts`, {
           params: {
             page: page,
@@ -42,7 +43,9 @@ function BlogCard({ category, keyword }) {
           },
         });
 
-        // ⏳ Delay 1 วิก่อนแสดงข้อมูล
+        // ⏳ Delay 1 วิ (เฉพาะการดึงครั้งแรกเท่านั้น)
+        const delay = page === 1 ? 1000 : 0;
+        
         setTimeout(() => {
           if (page === 1) {
             setData(result.data.posts);
@@ -57,9 +60,10 @@ function BlogCard({ category, keyword }) {
           }
 
           setIsLoading(false);
-        }, 1000);
+        }, delay);
       } catch (e) {
         console.log(e);
+        setIsLoading(false); // ตั้ง loading เป็น false เมื่อเกิดข้อผิดพลาด
       }
     }
     fetchdata();
@@ -88,59 +92,55 @@ function BlogCard({ category, keyword }) {
         {data.map((item) => {
           return (
             <Link key={item.id} to={`/post/${item.id}`}>
-            <li>
-              <div
-                id="blogcard"
-                className="bg-white md:rounded-2xl md:shadow-lg overflow-hidden  
-                hover:shadow-2xl hover:scale-105 transition-transform duration-300 hover:cursor-pointer
-                pb-[20px]"
-              >
-                <Link to={`/post/${item.id}`}>
+              <li>
+                <div
+                  id="blogcard"
+                  className="bg-white md:rounded-2xl md:shadow-lg overflow-hidden  
+                  hover:shadow-2xl hover:scale-105 transition-transform duration-300 hover:cursor-pointer
+                  pb-[20px]"
+                >
                   <img
                     src={item.image}
                     alt="img-blog-card"
                     className="w-full h-[360px] object-contain"
                   />
-                </Link>
-                <div id="detail" className="p-6 flex flex-col gap-3">
-                  <div
-                    id="genres"
-                    className="text-sm font-medium text-white bg-indigo-500 px-3 py-1 rounded-full w-fit"
-                  >
-                    {item.category}
-                  </div>
-                  <Link to={`/post/${item.id}`}>
+                  <div id="detail" className="p-6 flex flex-col gap-3">
+                    <div
+                      id="genres"
+                      className="text-sm font-medium text-white bg-indigo-500 px-3 py-1 rounded-full w-fit"
+                    >
+                      {item.category}
+                    </div>
                     <p className="text-xl font-semibold text-gray-900">
                       {item.title}
                     </p>
-                  </Link>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    {item.description}
-                  </p>
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      {item.description}
+                    </p>
 
-                  <div
-                    id="creater"
-                    className="flex items-center gap-3 border-t border-gray-200 pt-4 mt-2"
-                  >
-                    <img
-                      src={item.profile_pic}
-                      alt="logo"
-                      className="w-8 h-8 rounded-full"
-                    />
-                    <p className="text-sm font-medium text-gray-800">
-                      {item.name} |
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(item.date).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </p>
+                    <div
+                      id="creater"
+                      className="flex items-center gap-3 border-t border-gray-200 pt-4 mt-2"
+                    >
+                      <img
+                        src={item.profile_pic}
+                        alt="logo"
+                        className="w-8 h-8 rounded-full"
+                      />
+                      <p className="text-sm font-medium text-gray-800">
+                        {item.name} |
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(item.date).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </li>
+              </li>
             </Link>
           );
         })}
@@ -152,9 +152,16 @@ function BlogCard({ category, keyword }) {
           <button
             onClick={handlePage}
             disabled={isLoading || !hasMore}
-            className="hover:text-muted-foreground font-medium underline"
+            className="hover:text-muted-foreground font-medium underline hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {isLoading ? "Loading..." : "View more"}
+            {isLoading ? (
+              <>
+                <span className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-current"></span>
+                Loading...
+              </>
+            ) : (
+              "View more"
+            )}
           </button>
         </div>
       )}
