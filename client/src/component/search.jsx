@@ -1,87 +1,187 @@
-import { Search as SearchIcon } from "lucide-react"; // ใช้ icon จาก lucide-react
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Search as SearchIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import axios from "axios";
-import { useState, useEffect } from "react";
-const API_URL = import.meta.env.VITE_API_URL ;
+import { useState, useEffect, useRef } from "react";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 function Search({ category, setCategory, keyword, setKeyword }) {
   const [isOpen, setIsOpen] = useState(true);
-  const filterbar = ["Highlight", "Cat", "Inspiration", "General"];
-  const [inputValue, setInputValue] = useState(""); // state ของ input
+  const [categories, setCategories] = useState(["highlight"]); // เริ่มด้วย highlight
+  const [inputValue, setInputValue] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const scrollContainerRef = useRef(null);
 
-  // 🔍 Debounce & Fetch Suggestions
+  // ดึง Categories จาก API แล้วเอามาต่อกับ ["highlight"]
   useEffect(() => {
-    if (!inputValue.trim()) {
-      setSuggestions([]);
-      return;
-    }
-
-    const handler = setTimeout(async () => {
+    const fetchCategories = async () => {
       try {
-        const res = await axios.get(`${API_URL}/posts`, {
-          params: { keyword: inputValue, limit: 6 },
-        });
+        const res = await axios.get(`${API_URL}/posts/category`);
+        const categoryNames = res.data.categories.map((cat) => cat.name);
+        setCategories(["highlight", ...categoryNames]); // รวม highlight ไว้ก่อนเสมอ
+        setLoadingCategories(false);
+      } catch (err) {
+        console.log("Error fetching categories:", err);
+        setLoadingCategories(false);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // ดึงข้อมูล posts ตาม category และ keyword
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const params = { limit: 6 };
+        if (category && category !== "highlight") {
+          params.category = category;
+        }
+        if (keyword && keyword.trim() !== "") {
+          params.keyword = keyword.trim();
+        }
+
+        const res = await axios.get(`${API_URL}/posts`, { params });
         setSuggestions(res.data.posts);
-        setShowSuggestions(true);
+        setShowSuggestions(false); // เปลี่ยนจาก true เป็น false
       } catch (err) {
         console.log(err);
       }
-    }, 400);
+    };
 
-    return () => clearTimeout(handler);
-  }, [inputValue]);
+    fetchPosts();
+  }, [category, keyword]);
 
-  // ✋ เลือกรายการจาก Suggestions
+  // เลือกรายการจาก Suggestions
   const handleSelect = (item) => {
     setKeyword(item.title);
     setInputValue(item.title);
     setShowSuggestions(false);
   };
 
-  return (
-    <>
-      <div className="w-[100%] flex flex-col items-center mb-[60px] ">
-        <div className="w-[100%] md:w-[80%] md:h-[160px] flex flex-col gap-[20px]">
-          {/* header */}
-          <h1 className="pl-[20px] md:h-1/2 !text-3xl md:!text-4xl !font-bold ">
-            Latest articles
-          </h1>
+  // Scroll ไปขวา
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: 200, behavior: "smooth" });
+    }
+  };
 
-          {/* Desktop */}
-          <div className="h-1/2 hidden flex-row justify-between items-center px-[40px] bg-gray-100 rounded-3xl md:flex">
-            <div className="flex flex-row gap-[20px]">
-              {filterbar.map((item, i) => (
-                <button
-                  key={i}
-                  className={`px-4 py-2 rounded-xl text-gray-600 text-2xl  
-                  ${
-                    category === item
-                      ? "bg-gray-300 text-black font-bold"
-                      : "hover:bg-gray-300 transition hover:cursor-pointer"
-                  }`}
-                  disabled={category === item}
-                  value={item}
-                  onClick={() => {
-                    setCategory(item);
-                    setKeyword(""); // เปลี่ยนหมวด → ล้างค้นหา
-                    setInputValue("");
-                  }}
-                >
-                  {item}
-                </button>
-              ))}
+  // Scroll ไปซ้าย
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: -200, behavior: "smooth" });
+    }
+  };
+
+  // เวลาเริ่มต้นให้เลือก highlight (แสดงข้อมูลทั้งหมด)
+  useEffect(() => {
+    setCategory("highlight");
+    setKeyword("");
+    setInputValue("");
+  }, [setCategory, setKeyword]);
+
+  // เวลาเลือก category
+  const onCategoryClick = (item) => {
+    setCategory(item);
+    setKeyword("");
+    setInputValue("");
+  };
+
+  return (
+    <div className="w-[100%] flex flex-col items-center mb-[60px]">
+      <div className="w-[100%] md:w-[80%] md:h-[160px] flex flex-col gap-[20px]">
+        {/* header */}
+        <h1 className="pl-[20px] md:h-1/2 !text-3xl md:!text-4xl !font-bold ">
+          Latest articles
+        </h1>
+
+        {/* Desktop */}
+        <div className="h-1/2 hidden flex-row justify-between items-center px-[40px] bg-gray-100 rounded-3xl md:flex gap-4">
+          <div className="w-[50%] flex flex-row gap-[20px] ">
+            {/* Filterbar with Arrow Navigation */}
+            <button
+              onClick={scrollLeft}
+              className="flex-shrink-0 p-2 hover:bg-gray-300 rounded-lg transition"
+            >
+              <ChevronLeft className="w-5 h-5 text-gray-700" />
+            </button>
+
+            <div
+              ref={scrollContainerRef}
+              className="flex flex-row gap-[10px] overflow-x-hidden"
+            >
+              {loadingCategories ? (
+                <p className="text-gray-500">Loading categories...</p>
+              ) : (
+                categories.map((item) => (
+                  <button
+                    key={item}
+                    className={`px-4 py-2 rounded-xl text-gray-600 text-2xl whitespace-nowrap transition
+                    ${
+                      category === item
+                        ? "bg-gray-300 text-black font-bold"
+                        : "hover:bg-gray-300 hover:cursor-pointer"
+                    }`}
+                    disabled={category === item}
+                    onClick={() => onCategoryClick(item)}
+                  >
+                    {item === "highlight" ? "Highlight" : item}
+                  </button>
+                ))
+              )}
             </div>
 
-            {/* Search Input */}
-            <div className="relative flex items-center bg-white px-4 py-2 rounded-xl shadow-sm w-[250px]">
+            <button
+              onClick={scrollRight}
+              className="flex-shrink-0 p-2 hover:bg-gray-300 rounded-lg transition"
+            >
+              <ChevronRight className="w-5 h-5 text-gray-700" />
+            </button>
+          </div>
+
+          {/* Search Input */}
+          <div className="relative flex items-center bg-white px-4 py-2 rounded-xl shadow-sm w-[250px] flex-shrink-0">
+            <input
+              type="text"
+              placeholder="Search"
+              className="flex-1 outline-none bg-transparent text-gray-700"
+              value={inputValue}
+              onChange={(e) => {
+                const value = e.target.value;
+                setInputValue(value);
+                setKeyword(value.trim());
+                setShowSuggestions(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  setKeyword(inputValue.trim());
+                  setShowSuggestions(false);
+                }
+              }}
+            />
+            <SearchIcon className="w-4 h-4 text-gray-400" />
+
+            {/* Dropdown Suggestions */}
+            {showSuggestions && suggestions.length > 0 && (
+              <ul className="absolute top-[110%] left-0 w-full bg-white shadow-lg rounded-lg overflow-hidden z-20">
+                {suggestions.map((item, i) => (
+                  <li
+                    key={i}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                    onClick={() => handleSelect(item)}
+                  >
+                    {item.title}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+
+        {/* Mobile */}
+        {isOpen && (
+          <div className="flex md:hidden flex-col justify-center bg-gray-100 p-4 space-y-4">
+            <div className="flex items-center bg-white px-4 py-2 rounded-xl shadow-sm w-[100%]">
               <input
                 type="text"
                 placeholder="Search"
@@ -90,73 +190,35 @@ function Search({ category, setCategory, keyword, setKeyword }) {
                 onChange={(e) => {
                   const value = e.target.value;
                   setInputValue(value);
-
-                  // 🧹 ถ้าลบหมด → แสดงโพสต์ทั้งหมด
-                  if (value.trim() === "") {
-                    setKeyword("");
-                    setSuggestions([]);
-                    setShowSuggestions(false);
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    setKeyword(inputValue.trim());
-                    setShowSuggestions(false);
-                  }
+                  setKeyword(value.trim());
+                  setShowSuggestions(false);
                 }}
               />
               <SearchIcon className="w-4 h-4 text-gray-400" />
+            </div>
 
-              {/* Dropdown Suggestions */}
-              {showSuggestions && suggestions.length > 0 && (
-                <ul className="absolute top-[110%] left-0 w-full bg-white shadow-lg rounded-lg overflow-hidden z-20">
-                  {suggestions.map((item, i) => (
-                    <li
-                      key={i}
-                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                      onClick={() => handleSelect(item)}
-                    >
-                      {item.title}
-                    </li>
-                  ))}
-                </ul>
-              )}
+            <p className="text-gray-700">Category</p>
+            <div className="md:hidden w-full">
+              <select
+                value={category}
+                onChange={(e) => onCategoryClick(e.target.value)}
+                className="w-full py-3 rounded-sm text-muted-foreground"
+              >
+                {loadingCategories ? (
+                  <option disabled>Loading...</option>
+                ) : (
+                  categories.map((item) => (
+                    <option key={item} value={item}>
+                      {item === "highlight" ? "Highlight" : item}
+                    </option>
+                  ))
+                )}
+              </select>
             </div>
           </div>
-
-          {/* Mobile */}
-          {isOpen && (
-            <div className="flex md:hidden flex-col justify-center bg-gray-100 p-4 space-y-4">
-              <div className="flex items-center bg-white px-4 py-2 rounded-xl shadow-sm w-[100%]">
-                <input
-                  type="text"
-                  placeholder="Search"
-                  className="flex-1 outline-none bg-transparent text-gray-700"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                />
-                <SearchIcon className="w-4 h-4 text-gray-400" />
-              </div>
-              <p className="text-gray-700">Category</p>
-              <div className="md:hidden w-full">
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger className="w-full py-3 rounded-sm text-muted-foreground">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    {filterbar.map((item) => (
-                      <SelectItem key={item} value={item}>
-                        {item}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-        </div>
+        )}
       </div>
-    </>
+    </div>
   );
 }
 

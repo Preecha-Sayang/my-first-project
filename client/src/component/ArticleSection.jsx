@@ -85,10 +85,10 @@ function BlogCard({ category, keyword }) {
       )}
 
       <ul className="grid grid-cols-1 md:grid-cols-2 md:gap-8 list-none p-0 w-full md:w-[70%]">
-        {data.map((item, index) => {
+        {data.map((item) => {
           return (
-            <Link to={`/post/${item.id}`}>
-            <li key={index}>
+            <Link key={item.id} to={`/post/${item.id}`}>
+            <li>
               <div
                 id="blogcard"
                 className="bg-white md:rounded-2xl md:shadow-lg overflow-hidden  
