@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/context/authentication";
 import Swal from "sweetalert2";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_API_URL ;
 
@@ -170,9 +170,9 @@ export default function UserLoginPage() {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Don't have an account?{" "}
-              <a href="/signup" className="text-gray-800 hover:underline">
+              <Link to="/signup" className="text-gray-800 hover:underline">
                 Sign up
-              </a>
+              </Link>
             </p>
           </div>
         </div>
