@@ -169,7 +169,7 @@ function NavBar() {
                 Login
               </button>
             </Link>
-            <Link to={"/SignUp"}>
+            <Link to={"/signup"}>
               <button
                 type="button"
                 className="w-[120px] h-[40px] bg-black text-white rounded-4xl flex justify-center items-center hover:cursor-pointer hover:bg-white hover:border-2 hover:border-gray-400 hover:text-black transition-colors"
@@ -215,7 +215,7 @@ function NavBar() {
                 </button>
               </Link>
               <Link
-                to={"/SignUp"}
+                to={"/signup"}
                 onClick={handleMobileClose}
                 className="w-[80%]"
               >

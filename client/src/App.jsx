@@ -33,7 +33,7 @@ function App() {
             </AuthRoute>
             }/>
 
-           <Route path="/SignUp" element={
+           <Route path="/signup" element={
             <AuthRoute>
                 <SignUp/>
             </AuthRoute>

@@ -355,7 +355,7 @@ export default function ViewPost() {
                 Create an account to continue
               </h2>
               <button className="px-6 py-2 bg-black text-white rounded-full mb-4 cursor-pointer"
-              onClick={() => navigate("/SignUp")}
+              onClick={() => navigate("/signup")}
               >
                 Create account
               </button>

@@ -170,7 +170,7 @@ export default function UserLoginPage() {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Don't have an account?{" "}
-              <a href="/SignUp" className="text-gray-800 hover:underline">
+              <a href="/signup" className="text-gray-800 hover:underline">
                 Sign up
               </a>
             </p>
