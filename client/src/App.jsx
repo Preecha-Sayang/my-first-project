@@ -27,8 +27,6 @@ function App() {
 
            <Route path="/post/:postId" element={<ViewPostPage/>} />
 
-           <Route path="*" element={<NotFoundPage />} />
-
            <Route path="/login" element={
             <AuthRoute>
               <LoginPage/>              
@@ -57,6 +55,8 @@ function App() {
              <AdminService/>
             </ProtectedRoute>
           }/>
+
+           <Route path="*" element={<NotFoundPage />} />
 
         </Routes>
       <Toaster
