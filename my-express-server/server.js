@@ -11,6 +11,9 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 4001;
 
+// ✅ Trust proxy (สำคัญสำหรับ rate limiting ใน production)
+app.set('trust proxy', 1);
+
 // ✅ Restrict CORS (อนุญาตเฉพาะ Frontend)
 app.use(
   cors({
