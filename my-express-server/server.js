@@ -4,6 +4,7 @@ import cors from "cors";
 import authRouter from "./apps/auth.mjs";
 import postRouter from "./apps/postRouter.mjs";
 import dotenv from "dotenv";
+import { generalLimiter } from "./middleware/rateLimit.mjs";
 
 dotenv.config();
 
@@ -16,6 +17,9 @@ app.use(
     origin: process.env.CLIENT_ORIGIN || "*",
   })
 );
+
+// ✅ Apply General Rate Limiter to all routes
+app.use(generalLimiter);
 
 app.use(express.json());
 
@@ -30,7 +34,7 @@ if (
   console.log("✅ Supabase Environment Variables Loaded Successfully");
 }
 
-// ✅ Routes
+// ✅ Routes with specific rate limits
 app.use("/auth", authRouter);
 app.use("/posts", postRouter);
 

@@ -4,6 +4,9 @@ import connectionPool from "../utils/db.mjs";
 import multer from "multer";
 import protectAdmin from "../middleware/protectAdmin.mjs";
 import protectUser from "../middleware/protectUser.mjs";
+import { loginLimiter, registerLimiter } from "../middleware/rateLimit.mjs";
+
+
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -14,7 +17,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 const authRouter = Router();
 
 // จะเพิ่ม routes ต่างๆ ที่นี่
-authRouter.post("/register", async (req, res) => {
+authRouter.post("/register",registerLimiter, async (req, res) => {
   const { email, password, username, name } = req.body;
 
   try {
@@ -73,7 +76,7 @@ authRouter.post("/register", async (req, res) => {
   }
 });
 
-authRouter.post("/login", async (req, res) => {
+authRouter.post("/login",loginLimiter, async (req, res) => {
   const { email, password } = req.body;
 
   try {
@@ -92,7 +95,7 @@ authRouter.post("/login", async (req, res) => {
           error: "Your password is incorrect or this email doesn't exist",
         });
       }
-      return res.status(402).json({ error: error.message });
+      return res.status(401).json({ error: error.message });
     }
 
     return res.status(200).json({

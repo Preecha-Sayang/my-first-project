@@ -122,8 +122,8 @@ export default function SignupForm() {
 
 
   return (
-    <div className="bg-gray-100 min-h-screen flex items-center justify-center p-5 mt-[100px]">
-      <div className="bg-gray-200 p-8 rounded-lg w-[80%] text-center shadow-lg">
+    <div className="bg-gray-100 min-h-screen flex items-center justify-center p-5 ">
+      <div className="bg-gray-200 p-8 rounded-lg w-[50%] text-center shadow-lg">
         <h1 className="text-3xl font-bold text-gray-800 mb-8">Sign up</h1>
 
         <div className="space-y-4">

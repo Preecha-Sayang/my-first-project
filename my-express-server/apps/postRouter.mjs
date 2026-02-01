@@ -3,6 +3,7 @@ import validatePostData from "../middleware/postValidation.mjs";
 import connectionPool from "../utils/db.mjs";
 import protectUser from "../middleware/protectUser.mjs";
 import protectAdmin from "../middleware/protectAdmin.mjs";
+import { commentLimiter } from "../middleware/rateLimit.mjs";
 const postRouter = Router();
 
 postRouter.post("/", validatePostData, protectAdmin, async (req, res) => {
@@ -380,7 +381,7 @@ postRouter.delete("/:postId", protectAdmin, async (req, res) => {
   }
 });
 
-postRouter.post("/:postId/comments", protectUser, async (req, res) => {
+postRouter.post("/:postId/comments",protectUser, commentLimiter , async (req, res) => {
   const postId = req.params.postId;
   const userId = req.user.id; // ได้จาก protectUser
   const { comment } = req.body;
